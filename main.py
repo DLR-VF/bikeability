@@ -27,7 +27,7 @@ if __name__ == '__main__':
 
     boundary_gdf = gpd.GeoDataFrame(index=[0], crs='epsg:4326', geometry=[agg_table.unary_union])
     boundary = boundary_gdf.loc[0, 'geometry']
-    logging.basicConfig(filename=r'%s/logs/__osm_preprocessing.log' % current_path, filemode='a',
+    logging.basicConfig(filename=r'%s/logs/bikeability.log' % current_path, filemode='a',
                         format='%(asctime)s [%(levelname)s] %(message)s',
                         level=logging.INFO)
     logger = logging.getLogger(__name__)
@@ -39,30 +39,45 @@ if __name__ == '__main__':
         os.makedirs(f"{home_directory}/.bikeability")
 
     if download:
-        print("downloading necessary polygon data (landuse, leisure, etc..)\n")
-        logging.info('downloading necessary polygon and road network data (landuse, leisure, etc..) of ways')
-        network_gdfs = osm.get_network(boundary_gdf, network_type="all", custom_filter=None, simplify=False, verbose=0)
+        print("downloading street network and additional data from osm\n")
+        logging.info('downloading street network and nodes ')
+        network_gdfs = osm.get_network(boundary_gdf, network_type="bike", custom_filter=None, simplify=False, verbose=0)
         network = network_gdfs[1]
         nodes = network_gdfs[0][network_gdfs[0]["street_count"]>2]
-        network[["osmid", "maxspeed", "surface", "highway", "oneway", "length", "geometry"]].to_file(f"{home_directory}/.bikeability/network.gpkg", driver="GPKG")
+        network[["maxspeed", "surface", "highway", "oneway", "length", "geometry"]].to_file(f"{home_directory}/.bikeability/network.gpkg", driver="GPKG")
         nodes[["x", "y", "street_count", "geometry"]].to_file(f"{home_directory}/.bikeability/nodes.gpkg", driver="GPKG")
 
+        logging.info('downloading urban green')
         urban_green = osm.get_geometries(boundary, settings.bikeability_urban_green_tags, verbose)
-        urban_green[["osmid", "landuse", "natural", "leisure", "geometry"]].to_file(f"{home_directory}/.bikeability/urban_green.gpkg", driver="GPKG")
+        urban_green[["landuse", "natural", "leisure", "geometry"]].to_file(f"{home_directory}/.bikeability/urban_green.gpkg", driver="GPKG")
+
+        logging.info('downloading bike shops')
         shops = osm.get_geometries(boundary, settings.bikeability_shops_tags, verbose)
-        shops[["osmid", "name", "geometry"]].to_file(f"{home_directory}/.bikeability/shops.gpkg", driver="GPKG")
+        shops[["name", "geometry"]].to_file(f"{home_directory}/.bikeability/shops.gpkg", driver="GPKG")
+
+        logging.info('downloading amenities \n')
         amenities = osm.get_geometries(boundary, settings.bikeability_amenity_tags, verbose)
-        if "osmid" in amenities.columns:
-            amenities[["osmid", "geometry"]].to_file(f"{home_directory}/.bikeability/amenities.gpkg", driver="GPKG")
+        amenities[["geometry"]].to_file(f"{home_directory}/.bikeability/amenities.gpkg", driver="GPKG")
 
     else:
-        if os.path.exists(f"{home_directory}/.bikeability/amenities.gpkg"):
-            amenities = gpd.read_file(f"{home_directory}/.bikeability/amenities.gpkg")
-        shops = gpd.read_file(f"{home_directory}/.bikeability/shops.gpkg")
-        leisure = gpd.read_file(f"{home_directory}/.bikeability/leisure.gpkg")
-        urban_green = gpd.read_file(f"{home_directory}/.bikeability/landuse.gpkg")
-        network = gpd.read_file(f"{home_directory}/.bikeability/network.gpkg")
-        nodes = gpd.read_file(f"{home_directory}/.bikeability/nodes.gpkg")
+
+        try:
+            print("loading street network and additional data from disk\n")
+            logging.info('loading street network and additional data from disk')
+
+            if os.path.exists(f"{home_directory}/.bikeability/amenities.gpkg"):
+                amenities = gpd.read_file(f"{home_directory}/.bikeability/amenities.gpkg")
+            shops = gpd.read_file(f"{home_directory}/.bikeability/shops.gpkg")
+            leisure = gpd.read_file(f"{home_directory}/.bikeability/leisure.gpkg")
+            urban_green = gpd.read_file(f"{home_directory}/.bikeability/landuse.gpkg")
+            network = gpd.read_file(f"{home_directory}/.bikeability/network.gpkg")
+            nodes = gpd.read_file(f"{home_directory}/.bikeability/nodes.gpkg")
+
+        except Exception as e:
+            print(e)
+            print('Error: Can\'t find file or read data. Please download first\n')
+            logging.info('Error: can\'t find file or read data. Please download first')
+            sys.exit()
 
     cycle_tracks = util.create_cycle_tracks(agg_table, network)
     cycle_tracks.to_file(f"{home_directory}/.bikeability/cycle_tracks.gpkg", driver="GPKG")
@@ -72,8 +87,20 @@ if __name__ == '__main__':
     parks["geometry"].to_file(f"{home_directory}/.bikeability/parks.gpkg", driver="GPKG")
     streets = util.create_steets(agg_table, network)
     streets.to_file(f"{home_directory}/.bikeability/streets.gpkg", driver="GPKG")
+
+    nodes_utm = util.project_gdf(nodes)
     crossroads = util.cluster_intersections_to_crossroad(util.project_gdf(nodes), verbose=verbose)
     crossroads.to_file(f"{home_directory}/.bikeability/crossroads.gpkg", driver="GPKG")
+
+    command = 'Rscript'
+    path2script = r"%s/util/bikeability.R" % current_path
+    cmd_args = [args.host, args.dbname, args.user, args.password, args.location, args.agg_schema, args.srid]
+    cmd = [command, path2script] + cmd_args
+
+    subprocess.check_output(cmd, universal_newlines=True)
+    logging.info('bikeability calculation successful\n')
+
+
     ##
     ## Straßentypen
     ##

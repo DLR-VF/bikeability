@@ -12,7 +12,7 @@ from geoalchemy2 import Geometry, WKTElement
 
 
 def create_cycle_tracks(aggregation_units, network):
-    cycle_tracks = network[network["highway"]=="cycleway"]
+    cycle_tracks = network[network["highway"] == "cycleway"]
     cycle_tracks = cycle_tracks.overlay(aggregation_units, how="intersection")
     return cycle_tracks
 
@@ -60,13 +60,13 @@ def project_gdf(gdf, geom_col="geometry", to_crs=None, to_latlong=False):
     northern Norway.
 
     :param gdf: the gdf to be projected
-    :type gdf: Geopandas.GeoDataFrame::POINT
+    :type gdf: Geopandas.GeoDataFrame
     :param to_crs: CRS code. if not None,project GeodataFrame to CRS
     :type to_crs: int
     :param to_latlong: If True, projects to latlong instead of to UTM
     :type to_latlong: bool
     :return projected_gdf: A projected GeoDataFrame
-    :rtype projected_gdf: Geopandas.GeoDataFrame::POINT
+    :rtype projected_gdf: Geopandas.GeoDataFrame
     """
     assert len(gdf) > 0, "You cannot project an empty GeoDataFrame."
 
@@ -129,8 +129,9 @@ def cluster_intersections_to_crossroad(nodes, verbose=0):
     # if verbose > 0:
     #     print(sql_stmt)
     # df = pd.read_sql(sql_stmt, connection)
-    df = nodes
-    coords = df[['y', 'x']].values
+    nodes["y"] = nodes["geometry"].y
+    nodes["x"] = nodes["geometry"].x
+    coords = nodes[['y', 'x']].values
 
     ##clustering
     print('    performing clustering of intersections..')
@@ -148,7 +149,7 @@ def cluster_intersections_to_crossroad(nodes, verbose=0):
     geometry = [Point(xy) for xy in zip(rs.lon, rs.lat)]
 
     geo_df = GeoDataFrame(rs, crs=nodes.crs, geometry=geometry)
-    geo_df['geometry'] = geo_df['geometry'].apply(lambda x: WKTElement(x.wkt, srid=gpd.tools.epsg_from_crs(nodes.crs)))
+    #geo_df['geometry'] = geo_df['geometry'].apply(lambda x: WKTElement(x.wkt, srid=gpd.tools.epsg_from_crs(nodes.crs)))
     #geo_df.drop('geometry', 1, inplace=True)
     return geo_df
     # rs.to_sql(intersection_table+"_clustered", connection, schema='osm', if_exists='replace', index=True,
