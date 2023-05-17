@@ -13,17 +13,22 @@ from pathlib import Path
 import time
 from bikeability import util
 home_directory = Path.home()  #
+from sqlalchemy import create_engine
 
 if __name__ == '__main__':
 
+    region_of_interest = "test_0_v10"
+    id_column = "sg_id"
 
     current_path = os.path.dirname(os.path.realpath(__file__))
-    agg_table = gpd.read_file(current_path+f"\\data\sg_test_0.gpkg").to_crs(epsg='4326')
-    agg_table = agg_table[["sg_id", "geometry"]]
+    agg_table = gpd.read_file(current_path+f"\\data\sg_test.gpkg").to_crs(epsg='4326')
+
+
     download = True
     verbose = 0
-    timestamp = int(round(time.time()))
-
+    #timestamp = int(round(time.time()))
+    agg_table = agg_table[[id_column, "geometry"]]
+    agg_table = agg_table.rename(columns={id_column:"xid"})
 
     boundary_gdf = gpd.GeoDataFrame(index=[0], crs='epsg:4326', geometry=[agg_table.unary_union])
     boundary = boundary_gdf.loc[0, 'geometry']
@@ -92,13 +97,71 @@ if __name__ == '__main__':
     crossroads = util.cluster_intersections_to_crossroad(util.project_gdf(nodes), verbose=verbose)
     crossroads.to_file(f"{home_directory}/.bikeability/crossroads.gpkg", driver="GPKG")
 
-    command = 'Rscript'
-    path2script = r"%s/util/bikeability.R" % current_path
-    cmd_args = [args.host, args.dbname, args.user, args.password, args.location, args.agg_schema, args.srid]
-    cmd = [command, path2script] + cmd_args
+    login = {"username": sys.argv[1],
+             "password": sys.argv[2],
+             "host": "vf-athene",
+             "dbname": "user_simon_nieland",
+             "schema": "bikeability_tests"
+             }
 
-    subprocess.check_output(cmd, universal_newlines=True)
-    logging.info('bikeability calculation successful\n')
+    try:
+        engine = create_engine('postgresql://%s:%s@%s:5432/%s' % (login["username"], login["password"],
+                                                                  login["host"],
+                                                                  login["dbname"]))
+        conn = engine.connect()
+    except Exception as e:
+        logging.error(e)
+        print(e)
+        sys.exit()
+
+    agg_table = util.project_gdf(agg_table)
+    agg_table["area"] = agg_table.area
+    agg_table.to_postgis(f"{region_of_interest}_boundaries",
+                          con=conn,
+                          if_exists="replace",
+                          schema=login["schema"])
+
+    cycle_tracks.to_postgis(f"{region_of_interest}_cycle_traks",
+                          con=conn,
+                          if_exists="replace",
+                          schema=login["schema"])
+
+    urban_green.to_postgis(f"{region_of_interest}_green",
+                     con=conn,
+                     if_exists="replace",
+                     schema=login["schema"])
+    highway_buffers.to_postgis(f"{region_of_interest}_highway_buffers",
+                     con=conn,
+                     if_exists="replace",
+                     schema=login["schema"])
+
+    crossroads.to_postgis(f"{region_of_interest}_intersection_clustered",
+                          con=conn,
+                          if_exists="replace",
+                          schema=login["schema"])
+    parks.to_postgis(f"{region_of_interest}_parks",
+                          con=conn,
+                          if_exists="replace",
+                          schema=login["schema"])
+    urban_green.to_postgis(f"{region_of_interest}_green",
+                     con=conn,
+                     if_exists="replace",
+                     schema=login["schema"])
+    streets = util.project_gdf(streets)
+    streets.to_postgis(f"{region_of_interest}_streets",
+                     con=conn,
+                     if_exists="replace",
+                     schema=login["schema"])
+
+
+
+    # command = 'Rscript'
+    # path2script = r"%s/util/bikeability.R" % current_path
+    # cmd_args = [args.host, args.dbname, args.user, args.password, args.location, args.agg_schema, args.srid]
+    # cmd = [command, path2script] + cmd_args
+    #
+    # subprocess.check_output(cmd, universal_newlines=True)
+    # logging.info('bikeability calculation successful\n')
 
 
     ##

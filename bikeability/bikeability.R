@@ -1,28 +1,28 @@
 
 
-args <- commandArgs(trailingOnly = TRUE)
-cat(args, sep ="\n")
+#args <- commandArgs(trailingOnly = TRUE)
+#cat(args, sep ="\n")
 #print(args)
 # Convert to numerics
-host <- args[1]
-dbname <- args[2]
-user <- args[3]
-password <- args[4]
-location  <- args[5]
-aggr_schema <- args[6]
-srid <- args[7]
+#host <- args[1]
+#dbname <- args[2]
+#user <- args[3]
+#password <- args[4]
+#location  <- args[5]
+#aggr_schema <- args[6]
+#srid <- args[7]
 
 
 
 
-#host <- "vf-herakles"
-#dbname <- "bikeability"
-#user <- 'niel_sm'
-#password <- 'temppwd'
-#location  <- 'ulm'
-#aggr_table <- 'cottbus_single_hex_grid_1000'
-#aggr_schema <- 'cities'
-#srid <- '4326'
+host <- "vf-athene"
+dbname <- "user_simon_nieland"
+user <- "niel_sm"
+password <- 'xxx'
+location  <- 'test_0_v10'
+aggr_table <- 'sg_test_0'
+aggr_schema <- 'bikeability_tests'
+srid <- '4326'
 
 library("RPostgreSQL")
 library("sp")
@@ -165,55 +165,55 @@ set_utf8 = function(x){
 streets.query <-   sprintf(
     "SELECT 
     row_number() OVER () AS id,
-    st_length(st_transform(st_intersection(s.way, b.way), 3857)) AS length,
+    st_length(st_transform(st_intersection(s.geometry, b.geometry), 3857)) AS length,
     s.oneway,
     s.surface,
     s.highway,
-    b.name,
+    b.xid,
     b.area
     FROM %s.%s_streets s,    
     %s.%s_boundaries b       
-    WHERE st_intersects(s.way, b.way)", aggr_schema, location, aggr_schema, location )
+    WHERE st_intersects(s.geometry, b.geometry)", aggr_schema, location, aggr_schema, location )
 # Execute Query and encode to utf-8 to avoid artifacts with umlauts
 streets.intersected  <- set_utf8(dbGetQuery(con, streets.query))
 
   
 
   
-streets.intersected$highway <- substring(streets.intersected$highway, 9 )
+#streets.intersected$highway <- substring(streets.intersected$highway, 9 )
 # Aggregate the lengths on district level
-streets.sums <- streets.intersected %>% group_by(name, highway, oneway) %>% summarize(length=sum(length))
-boundary.name <- streets.intersected %>% select(name, area) %>% distinct()
+streets.sums <- streets.intersected %>% group_by(xid, highway, oneway) %>% summarize(length=sum(length))
+boundary.xid <- streets.intersected %>% select(xid, area) %>% distinct()
 
 # Only take oneway streets (e.g. tagged with oneway=yes)
-streets.oneway <- streets.sums %>% spread(highway, length) %>% filter(oneway=="yes")
+streets.oneway <- streets.sums %>% spread(highway, length) %>% filter(oneway==TRUE)
 streets.oneway[is.na(streets.oneway)] <- 0
 if("motorway" %in% colnames(streets.oneway)){
 }else{ streets.oneway$motorway=0}
 if("trunk" %in% colnames(streets.oneway)){
 }else{ streets.oneway$trunk=0}
-streets.oneway <- streets.oneway %>% group_by(name) %>% 
+streets.oneway <- streets.oneway %>% group_by(xid) %>% 
   summarize(motorway=sum(motorway), primary=sum(primary), secondary=sum(secondary), tertiary=sum(tertiary), 
             trunk=sum(trunk), residential=sum(residential), living_street=sum(living_street))# %>%
 
 
 # Take twoway streets (e.g. tagged with oneway=no and without specific tag)
-streets.twoway <- streets.sums %>% spread(highway, length) %>% filter(is.na(oneway) | oneway=="no")
+streets.twoway <- streets.sums %>% spread(highway, length) %>% filter(is.na(oneway) | oneway==FALSE)
 streets.twoway[is.na(streets.twoway)] <- 0
 if("motorway" %in% colnames(streets.twoway)){
 }else{ streets.twoway$motorway=0}
 if("trunk" %in% colnames(streets.twoway)){
 }else{ streets.twoway$trunk=0}
-streets.twoway <- streets.twoway %>% group_by(name) %>% 
+streets.twoway <- streets.twoway %>% group_by(xid) %>% 
   summarize(motorway=sum(motorway), primary=sum(primary), secondary=sum(secondary), tertiary=sum(tertiary), 
             trunk=sum(trunk), residential=sum(residential), living_street=sum(living_street))# %>%
 
 
 
 # Combine oneway and twowax roads and make sure that all districts are included
-street.types <- boundary.name %>% 
-  left_join(streets.oneway, by=c("name","name")) %>% 
-  left_join(streets.twoway, by=c("name", "name"), suffix=c("_oneway", "_twoway"))
+street.types <- boundary.xid %>% 
+  left_join(streets.oneway, by=c("xid" = "xid")) %>% 
+  left_join(streets.twoway, by=c("xid" = "xid"), suffix=c("_oneway", "_twoway"))
 # Set all NA is to zero because a non existent road is the same as a road with length zero.
 # This will cause less errors when performing mathematical operations
 street.types[is.na(street.types)] <- 0

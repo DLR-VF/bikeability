@@ -46,7 +46,7 @@ def create_parks(aggregation_units, urban_green):
     aggregation_units = project_gdf(aggregation_units)
     urban_green = project_gdf(urban_green)
     urban_green = urban_green.overlay(aggregation_units, how="intersection")
-    urban_green = urban_green.dissolve("sg_id")
+    urban_green = urban_green.dissolve("xid")
     print("hi")
     return urban_green
 
