@@ -22,8 +22,9 @@ def create_highway_buffers(aggregation_units, network):
     aggregation_units = project_gdf(aggregation_units)
     highway_buffer = network[(network["highway"] == "primary") |
                              (network["highway"] == "secondary") |
-                             (network["highway"] == "tertiary")].unary_union.buffer(15)
-    highway_buffer = gpd.GeoDataFrame(geometry=[highway_buffer], crs=network.crs)
+                             (network["highway"] == "tertiary")]
+    highway_buffer["geometry"] = highway_buffer["geometry"].buffer(15)
+    #highway_buffer = gpd.GeoDataFrame(geometry=[highway_buffer], crs=network.crs)
     highway_buffer = highway_buffer.overlay(aggregation_units, how="intersection")
     return highway_buffer
 

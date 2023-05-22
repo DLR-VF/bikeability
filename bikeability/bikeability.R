@@ -18,7 +18,7 @@
 host <- "vf-athene"
 dbname <- "user_simon_nieland"
 user <- "niel_sm"
-password <- 'xxx'
+password <- 'Samsonpg1!'
 location  <- 'test_0_v10'
 aggr_table <- 'sg_test_0'
 aggr_schema <- 'bikeability_tests'
@@ -282,60 +282,60 @@ psqlPutTable(con, aggr_schema, sprintf("%s_street_types",location), street.types
 
 
 buffer.query <- sprintf("SELECT row_number() OVER () AS id,
-                      buffers.name,
+                      buffers.xid,
                       buffers.highway,
-                      Sum(ST_Length(ST_Transform(st_intersection(buffers.way, cycle_track.way), 3857))) AS length
-                      FROM %s.%s_highway_buffers buffers,       --#change prefix according to schema here
+                      Sum(ST_Length(st_intersection(buffers.geometry, cycle_track.geometry)))
+                      AS length FROM %s.%s_highway_buffers buffers,       --#change prefix according to schema here
                       %s.%s_cycle_tracks cycle_track      --#change prefix according to schema here
-                      WHERE st_intersects(buffers.way, cycle_track.way) AND buffers.name = cycle_track.name
-                      AND (buffers.highway in ('highway_primary', 'highway_secondary', 'highway_tertiary'))
-                      GROUP BY buffers.name, buffers.highway", aggr_schema,location, aggr_schema, location)
+                      WHERE st_intersects(buffers.geometry, cycle_track.geometry) AND buffers.name = cycle_track.name
+                      AND (buffers.highway in ('primary', 'secondary', 'tertiary'))
+                      GROUP BY buffers.xid, buffers.highway", aggr_schema,location, aggr_schema, location)
 print(buffer.query)
 buffer.intersected <- set_utf8(dbGetQuery(con, buffer.query))
-buffer.intersected$highway <- substring(buffer.intersected$highway, 9 )
+#buffer.intersected$highway <- substring(buffer.intersected$highway, 9 )
 
 lane.query <- sprintf("SELECT row_number() OVER () AS id,
-                    p.name, l.street_type as highway, l.oneway, COALESCE(l.street_type='cycleway:right', l.street_type='cycleway'),
-                      Sum(ST_Length(ST_Intersection(ST_Transform(l.the_geom,3857), p.way))) as length
-                      FROM osm.%s_network l, %s.%s_boundaries p        
+                    p.xid, l.highway, l.oneway, COALESCE(l.highway='cycleway:right', l.highway='cycleway'),
+                      Sum(ST_Length(ST_Intersection(l.geometry, p.geometry))) as length
+                      FROM %s.%s_network l, %s.%s_boundaries p        
                       WHERE
-                      l.street_type is not null and
+                      l.highway is not null and
                       (l.cycleway =  'lane' or l.cycleway= 'lane' or l.cycleway = 'opposite_lane') and
-                      ST_Intersects(p.way, ST_TRANSFORM(l.the_geom,3857))
-                      GROUP BY p.name, l.street_type, l.oneway, COALESCE(l.street_type='cycleway:right', l.street_type='cycleway')
-                      ORDER BY p.name, street_type", location, aggr_schema, location)
+                      ST_Intersects(p.geometry, l.geometry)
+                      GROUP BY p.xid, l.highway, l.oneway, COALESCE(l.highway='cycleway:right', l.highway='cycleway')
+                      ORDER BY p.xid, highway", aggr_schema,  location, aggr_schema, location)
 lane.intersected <- set_utf8(dbGetQuery(con, lane.query))
-lane.intersected$highway <- substring(lane.intersected$highway, 9 )
+#lane.intersected$highway <- substring(lane.intersected$highway, 9 )
 
 
 track.query <- sprintf("SELECT row_number() OVER () AS id,
-                     p.name, l.street_type as highway, l.oneway, COALESCE(l.street_type='cycleway:right', l.street_type='cycleway'), 
-                     Sum(ST_Length(ST_Intersection(ST_Transform(l.the_geom,3857), p.way))) as length
-                     FROM osm.%s_network l, %s.%s_boundaries p         --#change prefix according to schema here
+                     p.xid, l.highway, l.oneway, COALESCE(l.highway='cycleway:right', l.highway='cycleway'), 
+                     Sum(ST_Length(ST_Intersection(l.geometry, p.geometry))) as length
+                     FROM %s.%s_network l, %s.%s_boundaries p         --#change prefix according to schema here
                      WHERE
-                     l.street_type is not null and
+                     l.highway is not null and
                      (l.cycleway = 'track' or l.cycleway = 'track' or l.cycleway = 'opposite_track') and
-                     ST_Intersects(p.way, ST_TRANSFORM(l.the_geom, 3857))
-                     GROUP BY p.name, l.street_type, l.oneway, COALESCE(l.street_type='cycleway:right', l.street_type='cycleway') 
-                     ORDER BY p.name, street_type", location, aggr_schema, location)
+                     ST_Intersects(p.geometry, l.geometry)
+                     GROUP BY p.xid, l.highway, l.oneway, COALESCE(l.highway='cycleway:right', l.highway='cycleway') 
+                     ORDER BY p.xid, highway", aggr_schema, location, aggr_schema, location)
 
 track.intersected <- set_utf8(dbGetQuery(con, track.query))
-track.intersected$highway <- substring(track.intersected$highway, 9 )
+#track.intersected$highway <- substring(track.intersected$highway, 9 )
 
 lane.weighted <- lane.intersected %>% 
   filter(highway %in% c("primary", "secondary", "tertiary")) %>%
   mutate(length_directions = if_else(oneway == "no" | is.na(oneway), length*2,length)) %>%
-  group_by(name, highway) %>% summarise(length =sum(length_directions)) %>%
+  group_by(xid, highway) %>% summarise(length =sum(length_directions)) %>%
   mutate(type = "lane")
 
 track.weighted <- track.intersected %>% 
   filter(highway %in% c("primary", "secondary", "tertiary")) %>%
   mutate(length_directions = if_else(oneway == "no" | is.na(oneway), length*2, length)) %>%
-  group_by(name, highway) %>% summarise(length =sum(length_directions)) %>%
+  group_by(xid, highway) %>% summarise(length =sum(length_directions)) %>%
   mutate(type = "track")
 
 cycle_infrastructure.intersected <- buffer.intersected %>% 
-  select(name, highway, length) %>% mutate(type="buffer") %>%
+  select(xid, highway, length) %>% mutate(type="buffer") %>%
   bind_rows(lane.weighted) %>%
   bind_rows(track.weighted) %>%
   unite(cycle_street_type, type, highway,  sep="_") %>%
@@ -373,7 +373,7 @@ if("lane_tertiary" %in% colnames(cycle_infrastructure.intersected)){
 }
 
 cycle_infrastructure.types <- street.types %>% 
-  left_join(cycle_infrastructure.intersected, by=c("name", "name")) 
+  left_join(cycle_infrastructure.intersected, by=c("xid" = "xid")) 
 cycle_infrastructure.types[is.na(cycle_infrastructure.types)] <-0
 cycle_infrastructure.types <- cycle_infrastructure.types %>%
   mutate(
@@ -417,7 +417,7 @@ cycle_infrastructure.types$share_3_buf_z<-as.numeric(scale(cycle_infrastructure.
 cycle_infrastructure.types[is.na(cycle_infrastructure.types)] <- 0
 
 
-cycle_infrastructure.final<-cycle_infrastructure.types[order(cycle_infrastructure.types$name),]
+cycle_infrastructure.final<-cycle_infrastructure.types[order(cycle_infrastructure.types$xid),]
 
 
 dbGetQuery(con, sprintf("Drop Table IF EXISTS %s.%s_infrastructure", aggr_schema,location) )
@@ -445,7 +445,7 @@ other.query <- sprintf("with facilities AS (select
                             --INTO osm.%s_bike_facilities_count
                             FROM %s.%s_boundaries b,
                             facilities p
-                            WHERE ST_WITHIN(ST_TRANSFORM(p.pos,3857),b.way)
+                            WHERE ST_WITHIN(ST_TRANSFORM(p.pos,3857),b.geometry)
                             GROUP By b.name, pos, p.v, p.k",
                                                   location,
                                                   location,
@@ -535,13 +535,13 @@ psqlPutTable(con, aggr_schema, sprintf("%s_green", location), green.intersected)
 
 connectivity_query <- sprintf("DROP TABLE IF EXISTS %s.%s_intersections_density;
                   
-                SELECT name, way, count(n.geom)/ST_AREA(b.way)*1000 as dens, count(n.geom) 
-                as count, ST_AREA(b.way)/1000 as area  
+                SELECT name, way, count(n.geom)/ST_AREA(b.geometry)*1000 as dens, count(n.geom) 
+                as count, ST_AREA(b.geometry)/1000 as area  
                 into %s.%s_intersections_density
                 from %s.%s_boundaries b 
                 LEFT JOIN osm.%s_network_intersection_clustered n 
-                on st_contains(ST_TRANSFORM(b.way, 3857), ST_TRANSFORM(n.geom, 3857))
-                GROUP BY b.name, b.way",aggr_schema, location, aggr_schema, location, aggr_schema, location, location)
+                on st_contains(ST_TRANSFORM(b.geometry, 3857), ST_TRANSFORM(n.geom, 3857))
+                GROUP BY b.name, b.geometry",aggr_schema, location, aggr_schema, location, aggr_schema, location, location)
 print(connectivity_query)
 dbGetQuery(con, connectivity_query)
 merged <- dbGetQuery(con, sprintf("Select name, count, area, dens from %s.%s_intersections_density",aggr_schema, location))
@@ -586,7 +586,7 @@ bikeability_df$bikeability <- bikeability_df$street_types_z*0.1651828+
 dbGetQuery(con, sprintf("Drop Table IF EXISTS %s.%s_bikeability_tmp", aggr_schema,location) )
 psqlPutTable(con,aggr_schema, sprintf("%s_bikeability_tmp",location), bikeability_df)
 dbGetQuery(con, sprintf("Drop Table IF EXISTS %s.%s_bikeability", aggr_schema,location) )
-dbGetQuery(con, sprintf("SELECT int.way::GEOMETRY(POLYGON, 3857) geom, b.*
+dbGetQuery(con, sprintf("SELECT int.geometry::GEOMETRY(POLYGON, 3857) geom, b.*
 								into %s.%s_bikeability	
  								from 
 								%s.%s_bikeability_tmp b

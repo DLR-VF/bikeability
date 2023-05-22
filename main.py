@@ -49,7 +49,7 @@ if __name__ == '__main__':
         network_gdfs = osm.get_network(boundary_gdf, network_type="bike", custom_filter=None, simplify=False, verbose=0)
         network = network_gdfs[1]
         nodes = network_gdfs[0][network_gdfs[0]["street_count"]>2]
-        network[["maxspeed", "surface", "highway", "oneway", "length", "geometry"]].to_file(f"{home_directory}/.bikeability/network.gpkg", driver="GPKG")
+        network[["maxspeed", "surface", "highway", "cycleway", "oneway", "length", "geometry"]].to_file(f"{home_directory}/.bikeability/network.gpkg", driver="GPKG")
         nodes[["x", "y", "street_count", "geometry"]].to_file(f"{home_directory}/.bikeability/nodes.gpkg", driver="GPKG")
 
         logging.info('downloading urban green')
@@ -114,6 +114,12 @@ if __name__ == '__main__':
         print(e)
         sys.exit()
 
+    network = util.project_gdf(network)
+    network.to_postgis(f"{region_of_interest}_network",
+                          con=conn,
+                          if_exists="replace",
+                          schema=login["schema"])
+
     agg_table = util.project_gdf(agg_table)
     agg_table["area"] = agg_table.area
     agg_table.to_postgis(f"{region_of_interest}_boundaries",
@@ -121,7 +127,8 @@ if __name__ == '__main__':
                           if_exists="replace",
                           schema=login["schema"])
 
-    cycle_tracks.to_postgis(f"{region_of_interest}_cycle_traks",
+    cycle_tracks = util.project_gdf(cycle_tracks)
+    cycle_tracks.to_postgis(f"{region_of_interest}_cycle_tracks",
                           con=conn,
                           if_exists="replace",
                           schema=login["schema"])
@@ -130,6 +137,8 @@ if __name__ == '__main__':
                      con=conn,
                      if_exists="replace",
                      schema=login["schema"])
+
+    highway_buffers = util.project_gdf(highway_buffers)
     highway_buffers.to_postgis(f"{region_of_interest}_highway_buffers",
                      con=conn,
                      if_exists="replace",
