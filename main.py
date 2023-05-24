@@ -10,23 +10,15 @@ import geopandas as gpd
 from bikeability import settings
 sys.path.append(os.getcwd())
 from pathlib import Path
-import time
+import subprocess
 from bikeability import util
 home_directory = Path.home()  #
 from sqlalchemy import create_engine
 
-if __name__ == '__main__':
 
-    region_of_interest = "test_0_v10"
-    id_column = "sg_id"
 
+def calc_bikeability(region_of_interest, id_column, agg_table, download=True, verbose=0):
     current_path = os.path.dirname(os.path.realpath(__file__))
-    agg_table = gpd.read_file(current_path+f"\\data\sg_test.gpkg").to_crs(epsg='4326')
-
-
-    download = True
-    verbose = 0
-    #timestamp = int(round(time.time()))
     agg_table = agg_table[[id_column, "geometry"]]
     agg_table = agg_table.rename(columns={id_column:"xid"})
 
@@ -58,11 +50,11 @@ if __name__ == '__main__':
 
         logging.info('downloading bike shops')
         shops = osm.get_geometries(boundary, settings.bikeability_shops_tags, verbose)
-        shops[["name", "geometry"]].to_file(f"{home_directory}/.bikeability/shops.gpkg", driver="GPKG")
+        shops[["name", "geometry", "shop"]].to_file(f"{home_directory}/.bikeability/shops.gpkg", driver="GPKG")
 
-        logging.info('downloading amenities \n')
-        amenities = osm.get_geometries(boundary, settings.bikeability_amenity_tags, verbose)
-        amenities[["geometry"]].to_file(f"{home_directory}/.bikeability/amenities.gpkg", driver="GPKG")
+        #logging.info('downloading amenities \n')
+        #amenities = osm.get_geometries(boundary, settings.bikeability_amenity_tags, verbose)
+        #amenities[["geometry"]].to_file(f"{home_directory}/.bikeability/amenities.gpkg", driver="GPKG")
 
     else:
 
@@ -70,11 +62,11 @@ if __name__ == '__main__':
             print("loading street network and additional data from disk\n")
             logging.info('loading street network and additional data from disk')
 
-            if os.path.exists(f"{home_directory}/.bikeability/amenities.gpkg"):
-                amenities = gpd.read_file(f"{home_directory}/.bikeability/amenities.gpkg")
+            #if os.path.exists(f"{home_directory}/.bikeability/amenities.gpkg"):
+                #amenities = gpd.read_file(f"{home_directory}/.bikeability/amenities.gpkg")
             shops = gpd.read_file(f"{home_directory}/.bikeability/shops.gpkg")
-            leisure = gpd.read_file(f"{home_directory}/.bikeability/leisure.gpkg")
-            urban_green = gpd.read_file(f"{home_directory}/.bikeability/landuse.gpkg")
+            #leisure = gpd.read_file(f"{home_directory}/.bikeability/leisure.gpkg")
+            urban_green = gpd.read_file(f"{home_directory}/.bikeability/urban_green.gpkg")
             network = gpd.read_file(f"{home_directory}/.bikeability/network.gpkg")
             nodes = gpd.read_file(f"{home_directory}/.bikeability/nodes.gpkg")
 
@@ -84,6 +76,7 @@ if __name__ == '__main__':
             logging.info('Error: can\'t find file or read data. Please download first')
             sys.exit()
 
+    small_street_share = util.calc_small_street_share(network, agg_table)
     cycle_tracks = util.create_cycle_tracks(agg_table, network)
     cycle_tracks.to_file(f"{home_directory}/.bikeability/cycle_tracks.gpkg", driver="GPKG")
     highway_buffers = util.create_highway_buffers(agg_table, network)
@@ -133,44 +126,57 @@ if __name__ == '__main__':
                           if_exists="replace",
                           schema=login["schema"])
 
-    urban_green.to_postgis(f"{region_of_interest}_green",
-                     con=conn,
-                     if_exists="replace",
-                     schema=login["schema"])
-
     highway_buffers = util.project_gdf(highway_buffers)
     highway_buffers.to_postgis(f"{region_of_interest}_highway_buffers",
                      con=conn,
                      if_exists="replace",
                      schema=login["schema"])
 
+    shops = util.project_gdf(shops)
+    shops.to_postgis(f"{region_of_interest}_shops",
+                               con=conn,
+                               if_exists="replace",
+                               schema=login["schema"])
+
     crossroads.to_postgis(f"{region_of_interest}_intersection_clustered",
                           con=conn,
                           if_exists="replace",
                           schema=login["schema"])
+
+    parks = util.project_gdf(parks)
     parks.to_postgis(f"{region_of_interest}_parks",
                           con=conn,
                           if_exists="replace",
                           schema=login["schema"])
-    urban_green.to_postgis(f"{region_of_interest}_green",
-                     con=conn,
-                     if_exists="replace",
-                     schema=login["schema"])
+
+
     streets = util.project_gdf(streets)
     streets.to_postgis(f"{region_of_interest}_streets",
                      con=conn,
                      if_exists="replace",
                      schema=login["schema"])
 
+    small_street_share.to_postgis(f"{region_of_interest}_street_types",
+                     con=conn,
+                     if_exists="replace",
+                     schema=login["schema"])
 
+    login = {"username": sys.argv[1],
+             "password": sys.argv[2],
+             "host": "vf-athene",
+             "dbname": "user_simon_nieland",
+             "schema": "bikeability_tests"
+             }
 
-    # command = 'Rscript'
-    # path2script = r"%s/util/bikeability.R" % current_path
-    # cmd_args = [args.host, args.dbname, args.user, args.password, args.location, args.agg_schema, args.srid]
-    # cmd = [command, path2script] + cmd_args
-    #
-    # subprocess.check_output(cmd, universal_newlines=True)
-    # logging.info('bikeability calculation successful\n')
+    print("calculating bikeability")
+    command = 'Rscript'
+    print(r"%s\bikeability\bikeability.R" % current_path)
+    path2script = r"%s\bikeability\bikeability.R" % current_path
+    cmd_args = [login["host"], login["dbname"], login["username"], login["password"], region_of_interest, login["schema"]]
+    cmd = [command, path2script] + cmd_args
+
+    subprocess.check_output(cmd, universal_newlines=True)
+    logging.info('bikeability calculation successful\n')
 
 
     ##
@@ -178,9 +184,25 @@ if __name__ == '__main__':
     ##
 
 
-    print("hi")
+if __name__ == '__main__':
+
+    region_of_interest = "sg_test_v13"
+    id_column = "sg_id"
+    download = False
+    current_path = os.path.dirname(os.path.realpath(__file__))
+    agg_table = gpd.read_file(current_path+f"\\data\sg_test.gpkg").to_crs(epsg='4326')
+
+    #
+    # agg_table = agg_table[["id", "geometry"]]
+    # for index, row in agg_table.iterrows():  # Looping over all points
+    #    print(row[0], row[1])
+    #    gdf = gpd.GeoDataFrame(row)
+    calc_bikeability(region_of_interest, id_column, agg_table, download=download, verbose=1)
 
 
+    #calc_bikeability()
+    download = True
+    verbose = 0
 
 
 

@@ -1,16 +1,16 @@
 
 
-#args <- commandArgs(trailingOnly = TRUE)
-#cat(args, sep ="\n")
-#print(args)
+args <- commandArgs(trailingOnly = TRUE)
+cat(args, sep ="\n")
+print(args)
 # Convert to numerics
-#host <- args[1]
-#dbname <- args[2]
-#user <- args[3]
-#password <- args[4]
-#location  <- args[5]
-#aggr_schema <- args[6]
-#srid <- args[7]
+host <- args[1]
+dbname <- args[2]
+user <- args[3]
+password <- args[4]
+location  <- args[5]
+aggr_schema <- args[6]
+srid <- args[7]
 
 
 
@@ -19,7 +19,7 @@ host <- "vf-athene"
 dbname <- "user_simon_nieland"
 user <- "niel_sm"
 password <- 'Samsonpg1!'
-location  <- 'test_0_v10'
+location  <- 'sg_test_v13'
 aggr_table <- 'sg_test_0'
 aggr_schema <- 'bikeability_tests'
 srid <- '4326'
@@ -88,7 +88,7 @@ loadSpatialTable <- function(tbl,
 }
 
 
-toSpDF <- function(x, name="way"){  
+toSpDF <- function(x, name="geometry"){  
   id <- which(colnames(x) == name)
   l <- lapply(x[, id], readWKT)
   lines_geom <- mapply(spChFIDs, l, as.character(rownames(x)))
@@ -109,7 +109,7 @@ psqlPutTable <- function(connection, schema, table, dataframe,
 }
 
 
-toSpPDF <- function(x, name="way"){  
+toSpPDF <- function(x, name="geometry"){  
   id <- which(colnames(x) == name)
   l <- lapply(x[, id], readWKT)
   lines_geom <- mapply(spChFIDs, l, as.character(rownames(x)))
@@ -119,7 +119,7 @@ toSpPDF <- function(x, name="way"){
   return(r)
 }
 
-toSpPtDF <- function(x, name="way"){  
+toSpPtDF <- function(x, name="geometry"){  
   id <- which(colnames(x) == name)
   l <- lapply(x[, id], readWKT)
   points.sp <- Reduce(function(a, b) spRbind(a, b), l, l[[1]])
@@ -160,123 +160,129 @@ set_utf8 = function(x){
 ##
 #print(streets.query)
 #setwd("D:/bikeability paper/InfRad_strukturiert/MSS")
-
-# Query, that splits and collects lenghts according to the district they are in
-streets.query <-   sprintf(
-    "SELECT 
-    row_number() OVER () AS id,
-    st_length(st_transform(st_intersection(s.geometry, b.geometry), 3857)) AS length,
-    s.oneway,
-    s.surface,
-    s.highway,
-    b.xid,
-    b.area
-    FROM %s.%s_streets s,    
-    %s.%s_boundaries b       
-    WHERE st_intersects(s.geometry, b.geometry)", aggr_schema, location, aggr_schema, location )
-# Execute Query and encode to utf-8 to avoid artifacts with umlauts
-streets.intersected  <- set_utf8(dbGetQuery(con, streets.query))
-
-  
-
-  
-#streets.intersected$highway <- substring(streets.intersected$highway, 9 )
-# Aggregate the lengths on district level
-streets.sums <- streets.intersected %>% group_by(xid, highway, oneway) %>% summarize(length=sum(length))
-boundary.xid <- streets.intersected %>% select(xid, area) %>% distinct()
-
-# Only take oneway streets (e.g. tagged with oneway=yes)
-streets.oneway <- streets.sums %>% spread(highway, length) %>% filter(oneway==TRUE)
-streets.oneway[is.na(streets.oneway)] <- 0
-if("motorway" %in% colnames(streets.oneway)){
-}else{ streets.oneway$motorway=0}
-if("trunk" %in% colnames(streets.oneway)){
-}else{ streets.oneway$trunk=0}
-streets.oneway <- streets.oneway %>% group_by(xid) %>% 
-  summarize(motorway=sum(motorway), primary=sum(primary), secondary=sum(secondary), tertiary=sum(tertiary), 
-            trunk=sum(trunk), residential=sum(residential), living_street=sum(living_street))# %>%
-
-
-# Take twoway streets (e.g. tagged with oneway=no and without specific tag)
-streets.twoway <- streets.sums %>% spread(highway, length) %>% filter(is.na(oneway) | oneway==FALSE)
-streets.twoway[is.na(streets.twoway)] <- 0
-if("motorway" %in% colnames(streets.twoway)){
-}else{ streets.twoway$motorway=0}
-if("trunk" %in% colnames(streets.twoway)){
-}else{ streets.twoway$trunk=0}
-streets.twoway <- streets.twoway %>% group_by(xid) %>% 
-  summarize(motorway=sum(motorway), primary=sum(primary), secondary=sum(secondary), tertiary=sum(tertiary), 
-            trunk=sum(trunk), residential=sum(residential), living_street=sum(living_street))# %>%
-
-
-
-# Combine oneway and twowax roads and make sure that all districts are included
-street.types <- boundary.xid %>% 
-  left_join(streets.oneway, by=c("xid" = "xid")) %>% 
-  left_join(streets.twoway, by=c("xid" = "xid"), suffix=c("_oneway", "_twoway"))
-# Set all NA is to zero because a non existent road is the same as a road with length zero.
-# This will cause less errors when performing mathematical operations
-street.types[is.na(street.types)] <- 0
+# 
+# # Query, that splits and collects lenghts according to the district they are in
+# streets.query <-   sprintf(
+#     "SELECT 
+#     row_number() OVER () AS id,
+#     st_length(st_transform(st_intersection(s.geometry, b.geometry), 3857)) AS length,
+#     s.oneway,
+#     s.surface,
+#     s.highway,
+#     b.xid,
+#     b.area
+#     FROM %s.%s_streets s,    
+#     %s.%s_boundaries b       
+#     WHERE st_intersects(s.geometry, b.geometry)", aggr_schema, location, aggr_schema, location )
+# # Execute Query and encode to utf-8 to avoid artifacts with umlauts
+# streets.intersected  <- set_utf8(dbGetQuery(con, streets.query))
+# 
+#   
+# 
+#   
+# #streets.intersected$highway <- substring(streets.intersected$highway, 9 )
+# # Aggregate the lengths on district level
+# streets.sums <- streets.intersected %>% group_by(xid, highway, oneway) %>% summarize(length=sum(length))
+# boundary.xid <- streets.intersected %>% select(xid, area) %>% distinct()
+# 
+# # Only take oneway streets (e.g. tagged with oneway=yes)
+# streets.oneway <- streets.sums %>% spread(highway, length) %>% filter(oneway==TRUE)
+# streets.oneway[is.na(streets.oneway)] <- 0
+# if("motorway" %in% colnames(streets.oneway)){
+# }else{ streets.oneway$motorway=0}
+# if("trunk" %in% colnames(streets.oneway)){
+# }else{ streets.oneway$trunk=0}
+# if("primary" %in% colnames(streets.oneway)){
+# }else{ streets.oneway$primary=0}
+# streets.oneway <- streets.oneway %>% group_by(xid) %>% 
+#   summarize(motorway=sum(motorway), primary=sum(primary), secondary=sum(secondary), tertiary=sum(tertiary), 
+#             trunk=sum(trunk), residential=sum(residential), living_street=sum(living_street))# %>%
+# 
+# 
+# # Take twoway streets (e.g. tagged with oneway=no and without specific tag)
+# streets.twoway <- streets.sums %>% spread(highway, length) %>% filter(is.na(oneway) | oneway==FALSE)
+# streets.twoway[is.na(streets.twoway)] <- 0
+# if("motorway" %in% colnames(streets.twoway)){
+# }else{ streets.twoway$motorway=0}
+# if("trunk" %in% colnames(streets.twoway)){
+# }else{ streets.twoway$trunk=0}
+# if("primary" %in% colnames(streets.twoway)){
+# }else{ streets.twoway$primary=0}
+# streets.twoway <- streets.twoway %>% group_by(xid) %>% 
+#   summarize(motorway=sum(motorway), primary=sum(primary), secondary=sum(secondary), tertiary=sum(tertiary), 
+#             trunk=sum(trunk), residential=sum(residential), living_street=sum(living_street))# %>%
+# 
+# 
+# 
+# # Combine oneway and twowax roads and make sure that all districts are included
+# street.types <- boundary.xid %>% 
+#   left_join(streets.oneway, by=c("xid" = "xid")) %>% 
+#   left_join(streets.twoway, by=c("xid" = "xid"), suffix=c("_oneway", "_twoway"))
+# # Set all NA is to zero because a non existent road is the same as a road with length zero.
+# # This will cause less errors when performing mathematical operations
+# street.types[is.na(street.types)] <- 0
 
 # Construct final Output table
-street.types <- street.types %>% 
-  mutate(
-    # Count lengths of each direction
-	# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!hier jeweils *2 rausmachen!!!!!!!!!!!!!!!!!!!!!
-    # primary_sum=primary_oneway+primary_twoway*2, 
-    # secondary_sum=secondary_oneway+secondary_twoway*2,
-    # tertiary_sum=tertiary_oneway+tertiary_twoway*2,
-    # residential_sum=residential_oneway+residential_twoway*2,
-    # living_street_sum=living_street_oneway+living_street_twoway*2,
-    # trunk_sum=trunk_oneway+trunk_twoway*2,
-    # motorway_sum=motorway_oneway+motorway_twoway*2) %>%
-    primary_sum=primary_oneway+primary_twoway, 
-    secondary_sum=secondary_oneway+secondary_twoway,
-    tertiary_sum=tertiary_oneway+tertiary_twoway,
-    residential_sum=residential_oneway+residential_twoway,
-    living_street_sum=living_street_oneway+living_street_twoway,
-    trunk_sum=trunk_oneway+trunk_twoway,
-    motorway_sum=motorway_oneway+motorway_twoway) %>%
-  mutate(
-    total_length = primary_sum + secondary_sum + tertiary_sum + residential_sum + trunk_sum + motorway_sum + living_street_sum
-  ) %>%
-  mutate(
-    # Shares of road types
-    primary_share=primary_sum / total_length, 
-    secondary_share=secondary_sum / total_length,
-    tertiary_share=tertiary_sum / total_length,
-    residential_share=residential_sum / total_length,
-    living_street_share=living_street_sum / total_length,
-    trunk_share=trunk_sum / total_length,
-    motorway_share=motorway_sum / total_length
-  ) %>%
-  #desity of road types
-  mutate(
-    primary_density=primary_sum/(1000*area),
-    secondary_density=secondary_sum/(1000*area),
-    tertiary_density=tertiary_sum/(1000*area),
-    residential_density=residential_sum/(1000*area),
-    living_street_density=living_street_sum/(1000*area),
-    trunk_density=trunk_sum/(1000*area),
-    motorway_density=motorway_sum/(1000*area)
-  ) %>%
-  mutate(
-    # Calculate Index
-    index = trunk_share * -5 + motorway_share * -5 + primary_share * -3 + secondary_share * -2 + tertiary_share * 1 + residential_share * 2 + living_street_share * 3
-  ) %>%
-  mutate(
-    # Norm index
-    index_norm = (index - min(index)) / (max(index) - min(index))
-  ) %>%
-    # share small streets
-  mutate(
-    small_streets_share=tertiary_share+residential_share+living_street_share
-  )
-
-street.types$small_streets_share_z <- as.numeric(scale(street.types$small_streets_share)) 
-
-dbGetQuery(con, sprintf("Drop Table IF EXISTS %s.%s_street_types", aggr_schema,location) )
-psqlPutTable(con, aggr_schema, sprintf("%s_street_types",location), street.types)
+# street.types <- street.types %>% 
+#   mutate(
+#     # Count lengths of each direction
+# 	# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!hier jeweils *2 rausmachen!!!!!!!!!!!!!!!!!!!!!
+#     # primary_sum=primary_oneway+primary_twoway*2, 
+#     # secondary_sum=secondary_oneway+secondary_twoway*2,
+#     # tertiary_sum=tertiary_oneway+tertiary_twoway*2,
+#     # residential_sum=residential_oneway+residential_twoway*2,
+#     # living_street_sum=living_street_oneway+living_street_twoway*2,
+#     # trunk_sum=trunk_oneway+trunk_twoway*2,
+#     # motorway_sum=motorway_oneway+motorway_twoway*2) %>%
+#     primary_sum=primary_oneway+primary_twoway, 
+#     secondary_sum=secondary_oneway+secondary_twoway,
+#     tertiary_sum=tertiary_oneway+tertiary_twoway,
+#     residential_sum=residential_oneway+residential_twoway,
+#     living_street_sum=living_street_oneway+living_street_twoway,
+#     trunk_sum=trunk_oneway+trunk_twoway,
+#     motorway_sum=motorway_oneway+motorway_twoway) %>%
+#   mutate(
+#     total_length = primary_sum + secondary_sum + tertiary_sum + residential_sum + trunk_sum + motorway_sum + living_street_sum
+#   ) %>%
+#   mutate(
+#     # Shares of road types
+#     primary_share=primary_sum / total_length, 
+#     secondary_share=secondary_sum / total_length,
+#     tertiary_share=tertiary_sum / total_length,
+#     residential_share=residential_sum / total_length,
+#     living_street_share=living_street_sum / total_length,
+#     trunk_share=trunk_sum / total_length,
+#     motorway_share=motorway_sum / total_length
+#   ) %>%
+#   #desity of road types
+#   mutate(
+#     primary_density=primary_sum/(1000*area),
+#     secondary_density=secondary_sum/(1000*area),
+#     tertiary_density=tertiary_sum/(1000*area),
+#     residential_density=residential_sum/(1000*area),
+#     living_street_density=living_street_sum/(1000*area),
+#     trunk_density=trunk_sum/(1000*area),
+#     motorway_density=motorway_sum/(1000*area)
+#   ) %>%
+#   mutate(
+#     # Calculate Index
+#     #Hier Anteil von living+residential an der Gesamtlänge
+#     
+#     index = trunk_share * -5 + motorway_share * -5 + primary_share * -3 + secondary_share * -2 + tertiary_share * 1 + residential_share * 2 + living_street_share * 3
+#   ) %>%
+#   mutate(
+#     # Norm index
+#     index_norm = (index - min(index)) / (max(index) - min(index))
+#   ) %>%
+#     # share small streets
+#   mutate(
+#     small_streets_share=tertiary_share+residential_share+living_street_share
+#   )
+# 
+# street.types$small_streets_share_z <- as.numeric(scale(street.types$small_streets_share)) 
+# 
+# dbGetQuery(con, sprintf("Drop Table IF EXISTS %s.%s_street_types", aggr_schema,location) )
+# psqlPutTable(con, aggr_schema, sprintf("%s_street_types",location), street.types)
 
 #######bike infrastructure
 
@@ -287,7 +293,7 @@ buffer.query <- sprintf("SELECT row_number() OVER () AS id,
                       Sum(ST_Length(st_intersection(buffers.geometry, cycle_track.geometry)))
                       AS length FROM %s.%s_highway_buffers buffers,       --#change prefix according to schema here
                       %s.%s_cycle_tracks cycle_track      --#change prefix according to schema here
-                      WHERE st_intersects(buffers.geometry, cycle_track.geometry) AND buffers.name = cycle_track.name
+                      WHERE st_intersects(buffers.geometry, cycle_track.geometry) AND buffers.xid = cycle_track.xid
                       AND (buffers.highway in ('primary', 'secondary', 'tertiary'))
                       GROUP BY buffers.xid, buffers.highway", aggr_schema,location, aggr_schema, location)
 print(buffer.query)
@@ -431,35 +437,25 @@ psqlPutTable(con, aggr_schema, sprintf("%s_infrastructure", location), cycle_inf
 ######################
 
 
-other.query <- sprintf("with facilities AS (select 
-							t.id, 
-                            %s_facility_node.pos, 
-                            t.v, 
-                            t.k   
-                            from osm.%s_facility_ntag t 
-                            LEFT JOIN osm.%s_facility_node on t.id =%s_facility_node.id 
-                            where (k='amenity' and v='bicycle_rental') or (k='shop' and v='bicycle'))
-                            SELECT b.name,
-                            Count(*) count, 
-                            cOALESCE(p.v,p.k) as type
-                            --INTO osm.%s_bike_facilities_count
-                            FROM %s.%s_boundaries b,
-                            facilities p
-                            WHERE ST_WITHIN(ST_TRANSFORM(p.pos,3857),b.geometry)
-                            GROUP By b.name, pos, p.v, p.k",
-                                                  location,
-                                                  location,
-                                                  location, 
-                                                  location,
-                                                  location, 
+other.query <- sprintf("select 
+                            b.xid,
+                            p.shop as type,
+                            b.area,
+                            count(*)
+                            FROM %s.%s_boundaries b, %s.%s_shops p
+                            WHERE ST_WITHIN(p.geometry,b.geometry)
+                            GROUP By b.xid, b.geometry, p.shop, b.area",
                                                   aggr_schema,
-												  location)
+                                                  location,
+                                                  aggr_schema,
+                                                  location
+                                                  )
 #print(other.query)
 other.intersected  <- set_utf8(dbGetQuery(con, other.query))
 
 print(other.query)
 
-boundaries.query <- sprintf("SELECT DISTINCT name, area from %s.%s_boundaries",aggr_schema, location)
+boundaries.query <- sprintf("SELECT DISTINCT xid, area from %s.%s_boundaries",aggr_schema, location)
 boundaries.name <- set_utf8(dbGetQuery(con, boundaries.query))
 # Execute Query and encode to utf-8 to avoid artifacts with umlauts
 
@@ -470,14 +466,14 @@ other.intersected <- boundaries.name %>% left_join(other.intersected)
 other.intersected[is.na(other.intersected[, "count"]), "count"] <- 0
 
 
-other.alltypes <- other.intersected %>% group_by(name, area) %>% summarize(n=sum(count))
+other.alltypes <- other.intersected %>% group_by(xid, area) %>% summarize(n=sum(count))
 other.alltypes$density<-other.alltypes$n/other.alltypes$area#
 
 psqlPutTable(con, aggr_schema, sprintf("%s_other", location), other.alltypes)
 
 
 if("bicycle_rental" %in% colnames(cycle_infrastructure.intersected)){
-	other.details <- other.intersected %>% group_by(name, type, area) %>% 
+	other.details <- other.intersected %>% group_by(xid, type, area) %>% 
 			summarize(count=sum(count)) %>% filter(!is.na(type)) %>% spread(type, count, fill = 0)%>% 
 			mutate(
 					all_=bicycle+bicycle_rental,
@@ -485,7 +481,7 @@ if("bicycle_rental" %in% colnames(cycle_infrastructure.intersected)){
 					bicycle_rental_density=bicycle_rental/area,
 					all_density_sum=bicycle_density+bicycle_rental_density)
 
-}else{ other.details <- other.intersected %>% group_by(name, type, area) %>% 
+}else{ other.details <- other.intersected %>% group_by(xid, type, area) %>% 
 			summarize(count=sum(count)) %>% filter(!is.na(type)) %>% spread(type, count, fill = 0)%>% 
 			mutate(
 					all_=bicycle,
@@ -508,10 +504,11 @@ psqlPutTable(con, aggr_schema, sprintf("%s_other", location), other.details)
 
 
 
-green.query <- sprintf("SELECT  name, 
-                                
-                                ST_AREA(way) area FROM %s.%s_parks",aggr_schema, location )
-boundary.query <- sprintf("SELECT DISTINCT name, area as area_boundary from %s.%s_boundaries", aggr_schema, location)
+green.query <- sprintf("SELECT  xid, 
+                                ST_AREA(geometry) area FROM %s.%s_parks",
+                       aggr_schema, location )
+
+boundary.query <- sprintf("SELECT DISTINCT xid, area as area_boundary from %s.%s_boundaries", aggr_schema, location)
 
 
 # Execute Query and encode to utf-8 to avoid artifacts with umlauts
@@ -535,37 +532,37 @@ psqlPutTable(con, aggr_schema, sprintf("%s_green", location), green.intersected)
 
 connectivity_query <- sprintf("DROP TABLE IF EXISTS %s.%s_intersections_density;
                   
-                SELECT name, way, count(n.geom)/ST_AREA(b.geometry)*1000 as dens, count(n.geom) 
+                SELECT xid, b.geometry, count(n.geometry)/ST_AREA(b.geometry)*1000 as dens, count(n.geometry) 
                 as count, ST_AREA(b.geometry)/1000 as area  
                 into %s.%s_intersections_density
                 from %s.%s_boundaries b 
-                LEFT JOIN osm.%s_network_intersection_clustered n 
-                on st_contains(ST_TRANSFORM(b.geometry, 3857), ST_TRANSFORM(n.geom, 3857))
-                GROUP BY b.name, b.geometry",aggr_schema, location, aggr_schema, location, aggr_schema, location, location)
+                LEFT JOIN %s.%s_intersection_clustered n 
+                on st_contains(b.geometry, n.geometry)
+                GROUP BY b.xid, b.geometry",aggr_schema, location, aggr_schema, location, aggr_schema, location, aggr_schema, location)
 print(connectivity_query)
 dbGetQuery(con, connectivity_query)
-merged <- dbGetQuery(con, sprintf("Select name, count, area, dens from %s.%s_intersections_density",aggr_schema, location))
+merged <- dbGetQuery(con, sprintf("Select xid, count, area, dens from %s.%s_intersections_density",aggr_schema, location))
 
 
 # #merge connectivity and others
-connectivity_other<-merge(x=merged,y=other.details, by="name", all.x=T)
+connectivity_other<-merge(x=merged,y=other.details, by="xid", all.x=T)
 
 
-dbGetQuery(con, sprintf("Drop Table IF EXISTS %s.%s_connetivity", aggr_schema,location) )
+dbGetQuery(con, sprintf("Drop Table IF EXISTS %s.%s_connectivity", aggr_schema,location) )
 psqlPutTable(con, "bikeability", "connectivity", connectivity_other)
 
 
-sql_query <- sprintf("SELECT inf.name jid, 
+sql_query <- sprintf("SELECT inf.xid jid, 
 inf.share_2_buf facilities,
 int.dens connectivity,
 o.all_density_sum share_repair,
 s.small_streets_share street_types,
 g.green_share green
 from 	%s.%s_infrastructure inf
-left join %s.%s_intersections_density int on inf.name = int.name
-left join %s.%s_other o on inf.name = o.name
-left join %s.%s_street_types s on inf.name = s.name
-left join %s.%s_green g on inf.name = g.name
+left join %s.%s_intersections_density int on inf.xid = int.xid
+left join %s.%s_other o on inf.xid = o.xid
+left join %s.%s_street_types s on inf.xid = s.xid
+left join %s.%s_green g on inf.xid = g.xid
 ",aggr_schema, location, aggr_schema, location, aggr_schema,location, aggr_schema,location, aggr_schema,location)
 
 bikeability_df <- dbGetQuery(con, sql_query)
@@ -585,13 +582,16 @@ bikeability_df$bikeability <- bikeability_df$street_types_z*0.1651828+
 
 dbGetQuery(con, sprintf("Drop Table IF EXISTS %s.%s_bikeability_tmp", aggr_schema,location) )
 psqlPutTable(con,aggr_schema, sprintf("%s_bikeability_tmp",location), bikeability_df)
+
+
 dbGetQuery(con, sprintf("Drop Table IF EXISTS %s.%s_bikeability", aggr_schema,location) )
-dbGetQuery(con, sprintf("SELECT int.geometry::GEOMETRY(POLYGON, 3857) geom, b.*
+#dbGetQuery(con, sprintf("SELECT int.geometry::GEOMETRY(POLYGON, 3857) geom, b.*
+dbGetQuery(con, sprintf("SELECT int.geometry geom, b.*
 								into %s.%s_bikeability	
  								from 
 								%s.%s_bikeability_tmp b
 								left join 
-								%s.%s_intersections_density int on b.jid=int.name
+								%s.%s_boundaries int on b.jid=int.xid
 								",aggr_schema, location, aggr_schema, location, aggr_schema, location))
 
 dbGetQuery(con, sprintf("Drop Table IF EXISTS %s.%s_bikeability_tmp", aggr_schema,location) )								

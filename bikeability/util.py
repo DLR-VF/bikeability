@@ -47,8 +47,7 @@ def create_parks(aggregation_units, urban_green):
     aggregation_units = project_gdf(aggregation_units)
     urban_green = project_gdf(urban_green)
     urban_green = urban_green.overlay(aggregation_units, how="intersection")
-    urban_green = urban_green.dissolve("xid")
-    print("hi")
+    urban_green = urban_green.dissolve("xid").reset_index(names='xid')
     return urban_green
 
 
@@ -111,6 +110,46 @@ def project_gdf(gdf, geom_col="geometry", to_crs=None, to_latlong=False):
 def get_centroids(cluster):
     centroid = (MultiPoint(cluster).centroid.x, MultiPoint(cluster).centroid.y)
     return tuple(centroid)
+
+def calc_small_street_share(network, aggregation_units):
+
+    aggregation_units = project_gdf(aggregation_units)
+    network = network[['highway', 'geometry']]
+    network = project_gdf(network)
+
+    network_intersected = gpd.sjoin(network, aggregation_units, how='inner', op='intersects')
+    network_length = network_intersected.dissolve("xid").reset_index(names='xid')
+    network_length["length_all_streets"] = network_length.length
+
+    network_length_small_streets_intersected = \
+        gpd.sjoin(network[(network["highway"] == "residential") | (network["highway"] == "living_street")],
+                  aggregation_units, how='inner', op='intersects')
+    network_length_small_streets = network_length_small_streets_intersected.dissolve("xid").reset_index(names='xid')
+
+    network_length_small_streets["length_small_streets"] = network_length_small_streets.length
+    small_streets_share = network_length.merge(network_length_small_streets[["xid", "length_small_streets"]], on="xid")
+    small_streets_share["small_streets_share"] = small_streets_share["length_small_streets"]/ small_streets_share["length_all_streets"]
+    return small_streets_share[["xid", "length_all_streets", "length_small_streets","small_streets_share", "geometry"]]
+
+def calc_share_cycling_infrastructure(network, aggregation_units):
+
+    aggregation_units = project_gdf(aggregation_units)
+    network = network[['highway', "cycleway", 'geometry']]
+    network = project_gdf(network)
+
+    network_intersected = gpd.sjoin(network, aggregation_units, how='inner', op='intersects')
+    network_length = network_intersected.dissolve("xid").reset_index(names='xid')
+    network_length["length_all_streets"] = network_length.length
+
+    network_length_small_streets_intersected = \
+        gpd.sjoin(network[(network["highway"] == "residential") | (network["highway"] == "living_street")],
+                  aggregation_units, how='inner', op='intersects')
+    network_length_small_streets = network_length_small_streets_intersected.dissolve("xid").reset_index(names='xid')
+
+    network_length_small_streets["length_small_streets"] = network_length_small_streets.length
+    small_streets_share = network_length.merge(network_length_small_streets[["xid", "length_small_streets"]], on="xid")
+    small_streets_share["small_streets_share"] = small_streets_share["length_small_streets"]/ small_streets_share["length_all_streets"]
+    return small_streets_share[["xid", "length_all_streets", "length_small_streets","small_streets_share", "geometry"]]
 
 
 def cluster_intersections_to_crossroad(nodes, verbose=0):
