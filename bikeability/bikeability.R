@@ -18,7 +18,7 @@ srid <- args[7]
 host <- "vf-athene"
 dbname <- "user_simon_nieland"
 user <- "niel_sm"
-password <- 'Samsonpg1!'
+password <- 'xxx'
 location  <- 'sg_test_v13'
 aggr_table <- 'sg_test_0'
 aggr_schema <- 'bikeability_tests'
