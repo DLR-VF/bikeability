@@ -8,6 +8,7 @@ from shapely.geometry import MultiPoint
 from shapely.geometry import Point
 from geopandas import GeoDataFrame
 import pandas as pd
+from matplotlib import pyplot as plt
 from geoalchemy2 import Geometry, WKTElement
 
 
@@ -17,15 +18,22 @@ def create_cycle_tracks(aggregation_units, network):
     return cycle_tracks
 
 
-def create_highway_buffers(aggregation_units, network):
+def create_highway_buffers(aggregation_units, network, home_directory):
     network = project_gdf(network)
     aggregation_units = project_gdf(aggregation_units)
     highway_buffer = network[(network["highway"] == "primary") |
                              (network["highway"] == "secondary") |
                              (network["highway"] == "tertiary")]
-    highway_buffer["geometry"] = highway_buffer["geometry"].buffer(15)
-    #highway_buffer = gpd.GeoDataFrame(geometry=[highway_buffer], crs=network.crs)
+    highway_buffer = highway_buffer["geometry"].buffer(15)
+    highway_buffer = gpd.GeoDataFrame(highway_buffer, geometry=0, crs=network.crs)
+    highway_buffer = highway_buffer.rename_geometry("geometry")
+    highway_buffer.reset_index(names="lid", inplace=True)
     highway_buffer = highway_buffer.overlay(aggregation_units, how="intersection")
+
+    highway_buffer_union = highway_buffer["geometry"].buffer(15).unary_union
+    highway_buffer_union = gpd.GeoDataFrame(geometry=[highway_buffer_union], crs=network.crs)
+    highway_buffer_union.to_file(f"{home_directory}/.bikeability/highway_buffers.gpkg", driver="GPKG")
+
     return highway_buffer
 
 
@@ -43,13 +51,51 @@ def create_steets(aggregation_units, network):
     return streets
 
 
-def create_parks(aggregation_units, urban_green):
+def calc_green_share(aggregation_units, urban_green, home_directory):
     aggregation_units = project_gdf(aggregation_units)
+    aggregation_units["area_total"] = aggregation_units.area
     urban_green = project_gdf(urban_green)
-    urban_green = urban_green.overlay(aggregation_units, how="intersection")
-    urban_green = urban_green.dissolve("xid").reset_index(names='xid')
-    return urban_green
+    urban_green = urban_green[(urban_green.geometry.type == "MultiPolygon") |
+                      (urban_green.geometry.type == "Polygon")]
+    urban_green = urban_green["geometry"].unary_union
+    urban_green_union = gpd.GeoDataFrame(geometry=[urban_green], crs=aggregation_units.crs)
 
+    aggregation_units_intersected = urban_green_union.overlay(aggregation_units, how="intersection")
+    aggregation_units_intersected["area_green"] = aggregation_units_intersected.area
+    aggregation_units_intersected.to_file(f"{home_directory}/.bikeability/urban_green_intersected.gpkg", driver="GPKG")
+    #aggregation_units_intersected["area_green"] = aggregation_units.area
+    urban_green_share = aggregation_units.merge(aggregation_units_intersected[["xid", "area_green"]], on="xid",
+                                                how="left").fillna(0)
+    urban_green_share["urban_green_share"] =urban_green_share["area_green"]/urban_green_share["area_total"]
+    urban_green_share.to_file(f"{home_directory}/.bikeability/green_share.gpkg", driver="GPKG")
+    return urban_green_share
+
+def calc_node_density(nodes, aggregation_units, home_directory):
+    nodes = project_gdf(nodes)
+    aggregation_units = project_gdf(aggregation_units)
+    aggregation_units["area_total"] = aggregation_units.area/1000000
+    crossroads = cluster_intersections_to_crossroad(project_gdf(nodes))
+    crossroads.to_file(f"{home_directory}/.bikeability/crossroads.gpkg", driver="GPKG")
+    #calc crossroad density
+    aggregation_units_node_count = aggregation_units.merge(aggregation_units.sjoin(crossroads).groupby('xid').size().rename('n_nodes').reset_index())
+    aggregation_units_node_count["node_density"] = aggregation_units_node_count["n_nodes"]/\
+                                                   aggregation_units_node_count["area_total"]
+    aggregation_units_node_count.to_file(f"{home_directory}/.bikeability/node_density.gpkg")
+    return aggregation_units_node_count
+
+def calc_shop_density(shops, aggregation_units, home_directory):
+    shops= project_gdf(shops)
+    aggregation_units = project_gdf(aggregation_units)
+    aggregation_units["area_total"] = aggregation_units.area/1000000
+
+    #calc shop density
+    aggregation_units_node_count = \
+        aggregation_units.merge(aggregation_units.sjoin(shops).groupby('xid').size().rename('n_shops').reset_index(),
+                                how="left").fillna(0)
+    aggregation_units_node_count["shop_density"] = aggregation_units_node_count["n_shops"]/\
+                                                   aggregation_units_node_count["area_total"]
+    aggregation_units_node_count.to_file(f"{home_directory}/.bikeability/shop_density.gpkg")
+    return aggregation_units_node_count
 
 def project_gdf(gdf, geom_col="geometry", to_crs=None, to_latlong=False):
     """
@@ -111,74 +157,128 @@ def get_centroids(cluster):
     centroid = (MultiPoint(cluster).centroid.x, MultiPoint(cluster).centroid.y)
     return tuple(centroid)
 
-def calc_small_street_share(network, aggregation_units):
+def calc_small_street_share(network, aggregation_units, home_directory):
 
     aggregation_units = project_gdf(aggregation_units)
     network = network[['highway', 'geometry']]
     network = project_gdf(network)
 
-    network_intersected = gpd.sjoin(network, aggregation_units, how='inner', op='intersects')
+    network_intersected = gpd.sjoin(network, aggregation_units, how='inner', predicate='intersects')
     network_length = network_intersected.dissolve("xid").reset_index(names='xid')
     network_length["length_all_streets"] = network_length.length
 
     network_length_small_streets_intersected = \
         gpd.sjoin(network[(network["highway"] == "residential") | (network["highway"] == "living_street")],
-                  aggregation_units, how='inner', op='intersects')
+                  aggregation_units, how='inner', predicate='intersects')
     network_length_small_streets = network_length_small_streets_intersected.dissolve("xid").reset_index(names='xid')
 
     network_length_small_streets["length_small_streets"] = network_length_small_streets.length
-    small_streets_share = network_length.merge(network_length_small_streets[["xid", "length_small_streets"]], on="xid")
+    small_streets_share = network_length.merge(network_length_small_streets[["xid", "length_small_streets"]], on="xid",
+                                               how="left").fillna(0)
     small_streets_share["small_streets_share"] = small_streets_share["length_small_streets"]/ small_streets_share["length_all_streets"]
+    small_streets_share.to_file(f"{home_directory}/.bikeability/small_streets_share.gpkg",
+                                                      driver="GPKG")
     return small_streets_share[["xid", "length_all_streets", "length_small_streets","small_streets_share", "geometry"]]
 
-def calc_share_cycling_infrastructure(network, aggregation_units):
+def calc_share_cycling_infrastructure(network, aggregation_units, home_directory):
 
+    # create buffer of main streets and write to disk
+    main_street_buffer = create_highway_buffers(aggregation_units, network, home_directory)
+
+    #project tu UTM
     aggregation_units = project_gdf(aggregation_units)
-    network = network[['highway', "cycleway", 'geometry']]
     network = project_gdf(network)
 
-    network_intersected = gpd.sjoin(network, aggregation_units, how='inner', op='intersects')
-    network_length = network_intersected.dissolve("xid").reset_index(names='xid')
-    network_length["length_all_streets"] = network_length.length
+   #Select bycicle infrastructure
+    cycling_network = network[(network["highway"] == "cycleway") |
+                      (network["cycleway"] == "lane") |
+                      (network["cycleway"] == "track") |
+                      (network["cycleway:right"] == "lane") |
+                      (network["cycleway:right"] == "track") |
+                      (network["cycleway:right"] == "separate") |
+                      (network["cycleway:left"] == "lane") |
+                      (network["cycleway:left"] == "track") |
+                      (network["cycleway:left"] == "separate") |
+                      (network["cycleway:both"] == "lane") |
+                      (network["cycleway:both"] == "track") |
+                      (network["cycleway:both"] == "separate")]
 
-    network_length_small_streets_intersected = \
-        gpd.sjoin(network[(network["highway"] == "residential") | (network["highway"] == "living_street")],
-                  aggregation_units, how='inner', op='intersects')
-    network_length_small_streets = network_length_small_streets_intersected.dissolve("xid").reset_index(names='xid')
+    # spatial join of cycling network and main street buffers
+    # result are edges of the network with cycling infrastructure
 
-    network_length_small_streets["length_small_streets"] = network_length_small_streets.length
-    small_streets_share = network_length.merge(network_length_small_streets[["xid", "length_small_streets"]], on="xid")
-    small_streets_share["small_streets_share"] = small_streets_share["length_small_streets"]/ small_streets_share["length_all_streets"]
-    return small_streets_share[["xid", "length_all_streets", "length_small_streets","small_streets_share", "geometry"]]
+    cycling_network_buffer_intersected = gpd.sjoin(cycling_network[["highway",
+                                                                    "cycleway:right",
+                                                                    "cycleway:left",
+                                                                    "cycleway:both",
+                                                                    "geometry"
+                                                                                ]],
 
+                                                   main_street_buffer,
+                                                   how='right',
+                                                   predicate='crosses')
+
+    # select main streets
+    main_street_network = network[(network["highway"] == "primary") |
+                            (network["highway"] == "secondary") |
+                            (network["highway"] == "tertiary")]
+
+    # now, we do not need the buffers anymore. so we merge our buffers with cycling infrastructure to the main street
+    # network by id
+    # select only main streets with bicycle infrastructure and write to file
+    network_with_cycling_infrastructure = main_street_network.merge(cycling_network_buffer_intersected[["xid", "lid"]],
+                                                                    on="lid",
+                                                                    how="inner")
+    network_with_cycling_infrastructure.to_file(
+        f"{home_directory}/.bikeability/main_street_network_network_with_cycling_infrastructure.gpkg",
+        driver="GPKG")
+
+    main_street_network.to_file(f"{home_directory}/.bikeability/main_street_network.gpkg",
+                                               driver="GPKG")
+
+    #divide streets in aggregation units, dissolve and calculate overall street network length of aggregation units
+    main_street_network_intersected = gpd.sjoin(main_street_network, aggregation_units,
+                                                how='right',
+                                                predicate='intersects')
+    main_street_network_intersected = main_street_network_intersected.dissolve("xid").reset_index(names='xid')
+    main_street_network_intersected["length_main_street_network"] = main_street_network_intersected.length
+
+    #dissolve and calculate street network length with bycicle infrastructure in aggregation units
+    network_with_cycling_infrastructure_share = network_with_cycling_infrastructure.dissolve("xid").reset_index(
+        names='xid')
+    network_with_cycling_infrastructure_share[
+        "length_edges_with_bike_infra"] = network_with_cycling_infrastructure_share.length
+
+    # merge and calculate shares
+    network_with_cycling_infrastructure_share = network_with_cycling_infrastructure_share.merge(
+        main_street_network_intersected[["xid", "length_main_street_network"]], on="xid", how="left").fillna(0)
+
+    network_with_cycling_infrastructure_share["cycling_infra_share"] = \
+        network_with_cycling_infrastructure_share["length_edges_with_bike_infra"] / \
+        network_with_cycling_infrastructure_share["length_main_street_network"]
+
+    network_with_cycling_infrastructure_share.to_file(f"{home_directory}/.bikeability/cycling_infra_share.gpkg",
+                                               driver="GPKG")
+
+    return network_with_cycling_infrastructure_share[["xid",
+                                "length_main_street_network",
+                                  "length_edges_with_bike_infra",
+                                  "cycling_infra_share",
+                                  "geometry"]]
 
 def cluster_intersections_to_crossroad(nodes, verbose=0):
-    ### Uses DBScan clustering algorithm to produce one crossing from several street intersections.
-    ###Input:
-    ###connection: sqlAlchemy db connection
-    ###intersection_schema: schema of street intersection table
-    ###intersection_schema: street intersection table
-    ###srid: srid code of region
 
-    #srid = int(srid)
-
-    ##data import
-    # sql_stmt = "select num, St_X(st_transform(geom,%s)) " \
-    #            "AS lon, st_y(st_transform(geom,%s)) " \
-    #            "as lat from %s.%s" % (srid, srid, intersection_schema, intersection_table)
-    # if verbose > 0:
-    #     print(sql_stmt)
-    # df = pd.read_sql(sql_stmt, connection)
     nodes["y"] = nodes["geometry"].y
     nodes["x"] = nodes["geometry"].x
     coords = nodes[['y', 'x']].values
 
     ##clustering
-    print('    performing clustering of intersections..')
+    if verbose > 1:
+        print('    performing clustering of intersections..')
     db = DBSCAN(eps=40, min_samples=1, n_jobs=-1).fit(coords)
     cluster_labels = db.labels_
     num_clusters = len(set(cluster_labels))
-    print('    Number of crossroads: {}\n'.format(num_clusters))
+    if verbose > 1:
+        print('    Number of crossroads: {}\n'.format(num_clusters))
     clusters = pd.Series([coords[cluster_labels == n] for n in range(num_clusters)])
 
     # get cluster centroids
@@ -189,9 +289,6 @@ def cluster_intersections_to_crossroad(nodes, verbose=0):
     geometry = [Point(xy) for xy in zip(rs.lon, rs.lat)]
 
     geo_df = GeoDataFrame(rs, crs=nodes.crs, geometry=geometry)
-    #geo_df['geometry'] = geo_df['geometry'].apply(lambda x: WKTElement(x.wkt, srid=gpd.tools.epsg_from_crs(nodes.crs)))
-    #geo_df.drop('geometry', 1, inplace=True)
+
     return geo_df
-    # rs.to_sql(intersection_table+"_clustered", connection, schema='osm', if_exists='replace', index=True,
-    #                     dtype={'geom': Geometry('POINT', srid= srid)})
-    ##write centriods to db
+
