@@ -48,8 +48,6 @@ def get_network(polygon, network_type="walk", custom_filter=None, simplify=False
     return network_gdfs
 
 def get_geometries(polygon, tags, verbose):
-    if verbose > 0:
-        print("downloading polygon data. This may take some time for bigger areas\n")
 
     return ox.geometries_from_polygon(polygon=polygon,
                                       tags=tags)

@@ -73,12 +73,28 @@ def calc_bikeability(id_column, agg_table, download=True, verbose=0):
             logging.info('Error: can\'t find file or read data. Please download first')
             sys.exit()
 
+    logging.info('all necessary data has been downloaded')
 
     share_cycling_infrastructure = util.calc_share_cycling_infrastructure(network, agg_table, home_directory)
+    if verbose > 0:
+        print('share of cycling infrastructure calculated\n')
+    logging.info('share of cycling infrastructure calculated')
     small_street_share = util.calc_small_street_share(network, agg_table, home_directory)
+    if verbose > 0:
+        print('share of small streets calculated\n')
+    logging.info('share of small streets calculated')
     green_share = util.calc_green_share(agg_table, urban_green, home_directory)
+    if verbose > 0:
+        print('green share calculated\n')
+    logging.info('green share calculated')
     node_density = util.calc_node_density(nodes, agg_table, home_directory)
+    if verbose > 0:
+        print('node density calculated\n')
+    logging.info('node density calculated')
     shop_density = util.calc_shop_density(shops, agg_table, home_directory)
+    if verbose > 0:
+        print('shop density calculated\n')
+    logging.info('shop density calculated')
 
     bikeability_gdf = green_share[["xid", "urban_green_share", "geometry"]].merge(
         small_street_share[["xid", "small_streets_share"]], on="xid").merge(
@@ -100,5 +116,7 @@ def calc_bikeability(id_column, agg_table, download=True, verbose=0):
                                      + bikeability_gdf["urban_green_share"].mul(0.1559295)\
                                      #+ bikeability_gdf["shop_density"].mul(0.0817205)
 
-    bikeability_gdf.to_file(f"{home_directory}/.bikeability/bikeability.gpkg", driver="GPKG")
+
+    print(f'bikeability values have been calculated for {agg_table.shape[0]} geometries\n')
+    logging.info('process finished\n')
     return bikeability_gdf
