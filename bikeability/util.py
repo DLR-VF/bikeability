@@ -180,7 +180,7 @@ def calc_small_street_share(network, aggregation_units, home_directory):
                                                       driver="GPKG")
     return small_streets_share[["xid", "length_all_streets", "length_small_streets","small_streets_share", "geometry"]]
 
-def calc_share_cycling_infrastructure(network, aggregation_units, home_directory):
+def calc_share_cycling_infrastructure(network, aggregation_units, home_directory, extended_result=False):
 
     # create buffer of main streets and write to disk
     main_street_buffer = create_highway_buffers(aggregation_units, network, home_directory)
@@ -203,15 +203,41 @@ def calc_share_cycling_infrastructure(network, aggregation_units, home_directory
                       (network["cycleway:both"] == "track") |
                       (network["cycleway:both"] == "separate")]
 
+
+    if extended_result:
+        cycling_network_tracks = network[(network["highway"] == "cycleway") |
+                                  (network["cycleway"] == "track") |
+                                  (network["cycleway:right"] == "track") |
+                                  (network["cycleway:right"] == "separate") |
+                                  (network["cycleway:left"] == "track") |
+                                  (network["cycleway:left"] == "separate") |
+                                  (network["cycleway:both"] == "track")
+                                  (network["cycleway:both"] == "separate")
+                                  ]
+
+        cycling_network_lanes = network[(network["highway"] == "cycleway") |
+                                  (network["cycleway"] == "lane") |
+                                  (network["cycleway:right"] == "lane") |
+                                  (network["cycleway:left"] == "lane") |
+                                  (network["cycleway:both"] == "lane")]
+        get_percentage(aggregation_units, cycling_network_lanes, main_street_buffer, network, home_directory,
+                       postfix="lanes")
+        get_percentage(aggregation_units, cycling_network_tracks, main_street_buffer, network, home_directory,
+                       postfix="tracks")
+
+
+    return get_percentage(aggregation_units, cycling_network, main_street_buffer, network, home_directory)
+
+
+def get_percentage(aggregation_units, cycling_network, main_street_buffer, network, home_directory, postfix="all"):
     # spatial join of cycling network and main street buffers
     # result are edges of the network with cycling infrastructure
-
     cycling_network_buffer_intersected = gpd.sjoin(cycling_network[["highway",
                                                                     "cycleway:right",
                                                                     "cycleway:left",
                                                                     "cycleway:both",
                                                                     "geometry"
-                                                                                ]],
+                                                                    ]],
 
                                                    main_street_buffer,
                                                    how='right',
@@ -219,9 +245,8 @@ def calc_share_cycling_infrastructure(network, aggregation_units, home_directory
 
     # select main streets
     main_street_network = network[(network["highway"] == "primary") |
-                            (network["highway"] == "secondary") |
-                            (network["highway"] == "tertiary")]
-
+                                  (network["highway"] == "secondary") |
+                                  (network["highway"] == "tertiary")]
     # now, we do not need the buffers anymore. so we merge our buffers with cycling infrastructure to the main street
     # network by id
     # select only main streets with bicycle infrastructure and write to file
@@ -229,41 +254,35 @@ def calc_share_cycling_infrastructure(network, aggregation_units, home_directory
                                                                     on="lid",
                                                                     how="inner")
     network_with_cycling_infrastructure.to_file(
-        f"{home_directory}/.bikeability/main_street_network_network_with_cycling_infrastructure.gpkg",
+        f"{home_directory}/.bikeability/main_street_network_network_with_cycling_infrastructure_{postfix}.gpkg",
         driver="GPKG")
-
     main_street_network.to_file(f"{home_directory}/.bikeability/main_street_network.gpkg",
-                                               driver="GPKG")
-
-    #divide streets in aggregation units, dissolve and calculate overall street network length of aggregation units
+                                driver="GPKG")
+    # divide streets in aggregation units, dissolve and calculate overall street network length of aggregation units
     main_street_network_intersected = gpd.sjoin(main_street_network, aggregation_units,
                                                 how='right',
                                                 predicate='intersects')
     main_street_network_intersected = main_street_network_intersected.dissolve("xid").reset_index(names='xid')
     main_street_network_intersected["length_main_street_network"] = main_street_network_intersected.length
-
-    #dissolve and calculate street network length with bycicle infrastructure in aggregation units
+    # dissolve and calculate street network length with bicycle infrastructure in aggregation units
     network_with_cycling_infrastructure_share = network_with_cycling_infrastructure.dissolve("xid").reset_index(
         names='xid')
     network_with_cycling_infrastructure_share[
         "length_edges_with_bike_infra"] = network_with_cycling_infrastructure_share.length
-
     # merge and calculate shares
     network_with_cycling_infrastructure_share = network_with_cycling_infrastructure_share.merge(
         main_street_network_intersected[["xid", "length_main_street_network"]], on="xid", how="left").fillna(0)
-
     network_with_cycling_infrastructure_share["cycling_infra_share"] = \
         network_with_cycling_infrastructure_share["length_edges_with_bike_infra"] / \
         network_with_cycling_infrastructure_share["length_main_street_network"]
-
-    network_with_cycling_infrastructure_share.to_file(f"{home_directory}/.bikeability/cycling_infra_share.gpkg",
-                                               driver="GPKG")
-
+    network_with_cycling_infrastructure_share.to_file(f"{home_directory}/.bikeability/cycling_infra_share_{postfix}.gpkg",
+                                                      driver="GPKG")
     return network_with_cycling_infrastructure_share[["xid",
-                                "length_main_street_network",
-                                  "length_edges_with_bike_infra",
-                                  "cycling_infra_share",
-                                  "geometry"]]
+                                                      "length_main_street_network",
+                                                      "length_edges_with_bike_infra",
+                                                      "cycling_infra_share",
+                                                      "geometry"]]
+
 
 def cluster_intersections_to_crossroad(nodes, verbose=0):
 
