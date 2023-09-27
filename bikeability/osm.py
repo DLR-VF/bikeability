@@ -1,13 +1,19 @@
 #!/usr/bin/env python3
 # coding:utf-8
-
+import sys
+import os
+project_path = os.path.abspath('../')
+sys.path.append(project_path)
 import osmnx as ox
+import bikeability.settings as settings
+ox.config(log_console=True, use_cache=True,
+          useful_tags_way = ox.settings.useful_tags_way + settings.additional_useful_tags_way)
 
 """Downloads pois, footprints and graphs from OSM"""
 
 """
 @name : osm.py
-@author : Simon Nieland, Serra Yosmaoglu
+@author : Simon Nieland
 @date : 26.07.2021
 @copyright : Institut fuer Verkehrsforschung, Deutsches Zentrum fuer Luft- und Raumfahrt
 """
@@ -47,7 +53,14 @@ def get_network(polygon, network_type="walk", custom_filter=None, simplify=False
     )
     return network_gdfs
 
-def get_geometries(polygon, tags, verbose):
+def get_geometries(polygon, tags, verbose=0):
 
     return ox.geometries_from_polygon(polygon=polygon,
                                       tags=tags)
+
+def get_network_from_xml(filepath, verbose=0):
+    if verbose>0:
+        print("importing network from osm-xml")
+    network_gdfs = ox.graph_to_gdfs(ox.graph_from_xml(filepath))
+
+    return network_gdfs
