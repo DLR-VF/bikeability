@@ -6,8 +6,7 @@ project_path = os.path.abspath('../')
 sys.path.append(project_path)
 import osmnx as ox
 import bikeability.settings as settings
-ox.config(log_console=True, use_cache=True,
-          useful_tags_way = ox.settings.useful_tags_way + settings.additional_useful_tags_way)
+ox.settings.useful_tags_way = ox.settings.useful_tags_way + settings.additional_useful_tags_way
 
 """Downloads pois, footprints and graphs from OSM"""
 
@@ -55,7 +54,7 @@ def get_network(polygon, network_type="walk", custom_filter=None, simplify=False
 
 def get_geometries(polygon, tags, verbose=0):
 
-    return ox.geometries_from_polygon(polygon=polygon,
+    return ox.features_from_polygon(polygon=polygon,
                                       tags=tags)
 
 def get_network_from_xml(filepath, verbose=0):

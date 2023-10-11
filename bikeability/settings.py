@@ -1,4 +1,8 @@
 
+from pathlib import Path
+from bikeability import util
+home_directory = Path.home()
+
 default_crs = "epsg:4326"
 
 bikeability_urban_green_tags = {'landuse': ['grass', 'scrub', 'wood', 'meadow', 'forest', 'village_green', \
@@ -20,3 +24,5 @@ colums_of_street_network = ["lid", "maxspeed", "surface", "highway",
 columns_of_urban_green = ["landuse", "natural", "leisure", "geometry"]
 
 columns_of_shops = ["name", "geometry", "shop"]
+
+tmp_directory = f"{home_directory}/.bikeability"

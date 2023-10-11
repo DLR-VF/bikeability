@@ -9,15 +9,14 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 
 
-
-
 project_path = os.path.abspath('../')
 aggregation_boundaries = gpd.read_file(project_path+f"/data/sg_test.gpkg").to_crs(epsg='4326')
 
 id_column = "h3_id"
-h3_res = 9
-download = True
+h3_res = 8
+download = False
 verbose = 1
+store_temp_files = False
 #agg_table = aggregation_boundaries[[id_column, "geometry"]]
 
 agg_table = grid.create_h3_grid(aggregation_boundaries, res=h3_res)
