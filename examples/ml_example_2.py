@@ -12,20 +12,20 @@ import matplotlib.pyplot as plt
 
 
 slice_from = 0
-slice_to = 45
+slice_to = 42
 project_path = os.path.abspath('../')
-#boundaries = gpd.read_file(project_path + f"/data3/boundaries2.shp", crs=25832, rows=slice(slice_from, slice_to)).to_crs(
-#            epsg='4326')
-
-boundaries = gpd.read_file(project_path + f"/data3/boundaries2.shp").to_crs(
+boundaries = gpd.read_file(project_path + f"/data3/boundaries2.shp", crs=25832, rows=slice(slice_from, slice_to)).to_crs(
             epsg='4326')
+
+#boundaries = gpd.read_file(project_path + f"/data3/boundaries2.shp").to_crs(
+#            epsg='4326')
 
 shapes = [#['gps_tracks_metadata_anonym_export_filtallBuff20.shp', 'FID'],
           #['AltRouteGHspdata_all2Buff20.shp', 'fid'],
-          ['AltRouteGHtrack_all_allBuff20_new.shp', 'FID'],
+          #['AltRouteGHtrack_all_allBuff20_new.shp', 'FID'],
           #['AltRouteORSspdata_allBuff20.shp', 'FID'],
           #['AltRouteORStrack_all_allBuff20.shp', 'FID'],
-          #['snapped_roads_format_together_sp_AllBuff20.shp', 'FID'],
+          ['snapped_roads_format_together_sp_AllBuff20.shp', 'FID'],
           ]
 
 
@@ -67,4 +67,4 @@ for shape in shapes:
 
 
 
-    bikeability_gdf_all.to_file(project_path + f"\\result_new\\{shape[0].split('.')[0]}{slice_from}_rest_bikeability.gpkg", driver="GPKG")
+    bikeability_gdf_all.to_file(project_path + f"\\result_new\\{shape[0].split('.')[0]}{slice_from}_{slice_to}rest_bikeability.gpkg", driver="GPKG")

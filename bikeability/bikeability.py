@@ -1,9 +1,6 @@
 import sys
 import os
 import logging
-
-import pandas as pd
-
 from bikeability import osm
 import geopandas as gpd
 from bikeability import settings
@@ -13,11 +10,24 @@ from bikeability import util
 home_directory = Path.home()
 import numpy as np
 
-def calc_bikeability(id_column, agg_table, download=True, verbose=0, network_gdf = None, store_tmp_files=False):
+def calc_bikeability(id_column: str, agg_table: gpd.GeoDataFrame, download: bool = True, verbose: int = 0,
+                     network_gdf: gpd.GeoDataFrame = None, store_tmp_files: bool = False) -> gpd.GeoDataFrame:
+    """
+    :param id_column: Network dataset to use (optional, if None is provided dataset will be downloaded from
+        osm automatically)
+    :type download:
+    :param agg_table (geopandas.GeoDataFrame): Aggregation geometries to use. Should be a GeoDataFrame with polygon geometries.
+    :param download (bool):  if True, download all data from OSM. If False, use stored data in settings.temp_folder
+    :param verbose (integer): verbose
+    :network_gdf (geopandas.GeoDataFrame): use given network for calculation
+    :store_tmp_files (bool): store pre- products for debugging. data sets will be written in settings.temp_folder
+    """
 
-    #todo: check if there are rows without geometry in the aggregation dataset.  if yes: drop.
+    if agg_table["geometry"].isna().sum() > 0:
+        print(f'{agg_table["geometry"].isna().sum()} objects without geometry will be dropped')
+        agg_table = agg_table.dropna()
 
-    project_path = os.path.abspath('../')
+
     agg_table = agg_table[[id_column, "geometry"]]
     agg_table = agg_table.rename(columns={id_column:"xid"})
 
@@ -36,7 +46,7 @@ def calc_bikeability(id_column, agg_table, download=True, verbose=0, network_gdf
 
     logging.basicConfig(filename=r'%s/logs/bikeability.log' % settings.tmp_directory, filemode='a',
                         format='%(asctime)s [%(levelname)s] %(message)s',
-                        level=logging.INFO)
+                        level=logging.DEBUG)
 
     if download:
 
@@ -46,12 +56,18 @@ def calc_bikeability(id_column, agg_table, download=True, verbose=0, network_gdf
         if network_gdf is None:
             network_gdfs = osm.get_network(boundary_gdf, network_type="bike", custom_filter=None, simplify=False, verbose=0)
         network = network_gdfs[1]
+
+        # create lid column
         if 'lid' in network.columns:
             del network['lid']
         network.reset_index(inplace=True)
         network.reset_index(names="lid", inplace=True)
+        # select only nodes which are connected to more than 2 edges
         nodes = network_gdfs[0][network_gdfs[0]["street_count"] > 2]
+        # be sure, that all necessary columns exist in the dataset, if not, create them with nan values
         network = network.reindex(settings.colums_of_street_network, fill_value=np.nan, axis=1)
+
+        # store network and nodes to disk
         network[settings.colums_of_street_network].to_file(f"{settings.tmp_directory}/network.gpkg", driver="GPKG")
         nodes[["x", "y", "street_count", "geometry"]].to_file(f"{settings.tmp_directory}/nodes.gpkg", driver="GPKG")
 

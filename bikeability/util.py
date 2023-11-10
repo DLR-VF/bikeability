@@ -61,7 +61,8 @@ def create_steets(aggregation_units, network):
 def calc_green_share(aggregation_units, urban_green, store_tmp_files=False):
     aggregation_units = project_gdf(aggregation_units)
     aggregation_units["area_total"] = aggregation_units.area
-    urban_green = project_gdf(urban_green)
+    if not urban_green.empty:
+        urban_green = project_gdf(urban_green)
     urban_green = urban_green[(urban_green.geometry.type == "MultiPolygon") |
                       (urban_green.geometry.type == "Polygon")]
     urban_green = urban_green["geometry"].unary_union
@@ -92,8 +93,8 @@ def calc_node_density(nodes, aggregation_units, home_directory, store_tmp_files=
     aggregation_units_node_count["node_density"] = aggregation_units_node_count["n_nodes"]/\
                                                    aggregation_units_node_count["area_total"]
     if store_tmp_files:
-        crossroads.to_file(f"{home_directory}/.bikeability/crossroads.gpkg", driver="GPKG")
-        aggregation_units_node_count.to_file(f"{home_directory}/.bikeability/node_density.gpkg")
+        crossroads.to_file(f"{settings.tmp_directory}/crossroads.gpkg", driver="GPKG")
+        aggregation_units_node_count.to_file(f"{settings.tmp_directory}/node_density.gpkg")
     return aggregation_units_node_count
 
 def calc_shop_density(shops, aggregation_units, store_tmp_files=False):
@@ -289,7 +290,7 @@ def calc_share_cycling_infrastructure(network, aggregation_units, store_tmp_file
     main_street_network_intersected = main_street_network_intersected.groupby(["xid"])['length_main_street'].agg('sum').reset_index()
 
     if network_with_cycling_infrastructure.empty:
-        network_with_cycling_infrastructure_share = main_street_network_intersected
+        network_with_cycling_infrastructure_share = aggregation_units[["xid", "lid"]]
         network_with_cycling_infrastructure_share["length_bike_infra"] = 0
         network_with_cycling_infrastructure_share["cycling_infra_share"] = 0
         network_with_cycling_infrastructure_share = aggregation_units.merge(
@@ -345,8 +346,8 @@ def calc_share_cycling_infrastructure(network, aggregation_units, store_tmp_file
 
         main_street_network.to_file(f"{settings.tmp_directory}/main_street_network.gpkg",
                                     driver="GPKG")
-        main_street_network_intersected.to_file(f"{settings.tmp_directory}/main_street_network.gpkg",
-                                                driver="GPKG")
+        #main_street_network_intersected.to_file(f"{settings.tmp_directory}/main_street_network.gpkg",
+        #                                        driver="GPKG")
         network_with_cycling_infrastructure_share.to_file(f"{settings.tmp_directory}/cycling_infra_share.gpkg",
                                                       driver="GPKG")
 
