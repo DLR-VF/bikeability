@@ -9,8 +9,8 @@ bikeability_urban_green_tags = {'landuse': ['grass', 'scrub', 'wood', 'meadow', 
                                               'farmland', 'conservation', 'orchard', 'recreation_ground', 'vinyard'],
                             'natural': ['scrub', 'wood', 'grassland', 'protected_area'],
                             'leisure': ['park']}
+
 bikeability_shops_tags = {'shop': ['bicycle'], 'amenity': ['bike_rental']}
-#bikeability_amenity_tags = {'amenity': 'bike_rental'}
 
 additional_useful_tags_way = ['surface', 'cycleway:both', 'lid', 'cycleway', 'cycleway:left', 'cycleway:right']
 

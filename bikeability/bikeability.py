@@ -1,6 +1,9 @@
 import sys
 import os
 import logging
+
+import pandas as pd
+
 from bikeability import osm
 import geopandas as gpd
 from bikeability import settings
@@ -9,19 +12,39 @@ from pathlib import Path
 from bikeability import util
 home_directory = Path.home()
 import numpy as np
+import warnings
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore",category=DeprecationWarning)
 
 def calc_bikeability(id_column: str, agg_table: gpd.GeoDataFrame, download: bool = True, verbose: int = 0,
-                     network_gdf: gpd.GeoDataFrame = None, store_tmp_files: bool = False) -> gpd.GeoDataFrame:
+                     network_gdf: gpd.GeoDataFrame = None, store_tmp_files: bool = False, date=None) -> gpd.GeoDataFrame:
     """
-    :param id_column: Network dataset to use (optional, if None is provided dataset will be downloaded from
-        osm automatically)
-    :type download:
-    :param agg_table (geopandas.GeoDataFrame): Aggregation geometries to use. Should be a GeoDataFrame with polygon geometries.
-    :param download (bool):  if True, download all data from OSM. If False, use stored data in settings.temp_folder
-    :param verbose (integer): verbose
-    :network_gdf (geopandas.GeoDataFrame): use given network for calculation
-    :store_tmp_files (bool): store pre- products for debugging. data sets will be written in settings.temp_folder
+
+    :param id_column: unique id column
+    :type id_column: str
+    :param agg_table: Aggregation geometries to use. Should be a GeoDataFrame with polygon geometries.
+    :type agg_table: geopandas.GeoDataFrame
+    :param download:  if True, download all data from OSM. If False, use stored data in settings.temp_folder
+    :type download: bool
+    :param verbose: verbose
+    :type verbose: integer
+    :param network_gdf: use given network for calculation
+    :type network_gdf: geopandas.GeoDataFrame
+    :param store_tmp_files: store pre- products for debugging. data sets will be written in settings.temp_folder
+    :type store_tmp_files: bool
+    :return: calculated bikeability values for the given aggregation units
+
     """
+
+    if not os.path.exists(settings.tmp_directory):
+        os.makedirs(settings.tmp_directory)
+
+    if not os.path.exists(settings.tmp_directory+"/logs"):
+        os.makedirs(settings.tmp_directory+"/logs")
+
+    logging.basicConfig(filename=r'%s/logs/bikeability.log' % settings.tmp_directory, filemode='a',
+                        format='%(asctime)s [%(levelname)s] %(message)s',
+                        level=logging.INFO)
 
     if agg_table["geometry"].isna().sum() > 0:
         print(f'{agg_table["geometry"].isna().sum()} objects without geometry will be dropped')
@@ -32,21 +55,11 @@ def calc_bikeability(id_column: str, agg_table: gpd.GeoDataFrame, download: bool
     agg_table = agg_table.rename(columns={id_column:"xid"})
 
     boundary_gdf = gpd.GeoDataFrame(index=[0], crs='epsg:4326', geometry=[agg_table.unary_union])
+    bounds = boundary_gdf.bounds
     boundary = boundary_gdf.loc[0, 'geometry']
 
     print(f'Generating bikeability indicator\n')
     logging.info('generating bikeability indicator based on aggregation units...')
-
-
-    if not os.path.exists(settings.tmp_directory):
-        os.makedirs(settings.tmp_directory)
-
-    if not os.path.exists(settings.tmp_directory+"/logs"):
-        os.makedirs(settings.tmp_directory+"/logs")
-
-    logging.basicConfig(filename=r'%s/logs/bikeability.log' % settings.tmp_directory, filemode='a',
-                        format='%(asctime)s [%(levelname)s] %(message)s',
-                        level=logging.DEBUG)
 
     if download:
 
@@ -54,7 +67,7 @@ def calc_bikeability(id_column: str, agg_table: gpd.GeoDataFrame, download: bool
         if verbose > 0:
             print("downloading street network and additional data from osm\n")
         if network_gdf is None:
-            network_gdfs = osm.get_network(boundary_gdf, network_type="bike", custom_filter=None, simplify=False, verbose=0)
+            network_gdfs = osm.get_network(boundary_gdf, network_type="bike", simplify=False, verbose=verbose, date=date)
         network = network_gdfs[1]
 
         # create lid column
@@ -71,11 +84,11 @@ def calc_bikeability(id_column: str, agg_table: gpd.GeoDataFrame, download: bool
         network[settings.colums_of_street_network].to_file(f"{settings.tmp_directory}/network.gpkg", driver="GPKG")
         nodes[["x", "y", "street_count", "geometry"]].to_file(f"{settings.tmp_directory}/nodes.gpkg", driver="GPKG")
 
-        logging.info('downloading urban green')
+        logging.info('downloading green spaces')
         if verbose > 0:
             print("downloading green spaces from osm\n")
         try:
-            urban_green = osm.get_geometries(boundary, settings.bikeability_urban_green_tags, verbose)
+            urban_green = osm.get_geometries(boundary, settings.bikeability_urban_green_tags, verbose, date=date)
             urban_green = urban_green.reindex(settings.columns_of_urban_green, fill_value=np.nan, axis=1)
             urban_green[settings.columns_of_urban_green].to_file(f"{settings.tmp_directory}/urban_green.gpkg", driver="GPKG")
         except Exception as e:
@@ -88,7 +101,7 @@ def calc_bikeability(id_column: str, agg_table: gpd.GeoDataFrame, download: bool
         if verbose>0:
             print("downloading bike shops from osm\n")
         try:
-            shops = osm.get_geometries(boundary, settings.bikeability_shops_tags, verbose)
+            shops = osm.get_geometries(boundary, settings.bikeability_shops_tags, verbose, date=date)
             shops = shops.reindex(settings.columns_of_shops, fill_value=np.nan, axis=1)
             shops[settings.columns_of_shops].to_file(f"{settings.tmp_directory}/shops.gpkg", driver="GPKG")
         except Exception as e:
@@ -122,23 +135,23 @@ def calc_bikeability(id_column: str, agg_table: gpd.GeoDataFrame, download: bool
     logging.info('calculating share of cycling infrastructure')
     if verbose > 0:
         print('calculating share of cycling infrastructure\n')
-    share_cycling_infrastructure = util.calc_share_cycling_infrastructure(network, agg_table, store_tmp_files)
+    share_cycling_infrastructure = util.share_cycling_infrastructure(network, agg_table, store_tmp_files)
 
 
     logging.info('calculating share of small streets')
     if verbose > 0:
         print('calculating share of small streets\n')
-    small_street_share = util.calc_small_street_share(network, agg_table, store_tmp_files)
+    small_street_share = util.share_small_streets(network, agg_table, store_tmp_files)
 
     logging.info('calculating green share')
     if verbose > 0:
         print('calculating green share\n')
-    green_share = util.calc_green_share(agg_table, urban_green, store_tmp_files)
+    green_share = util.share_green_spaces(agg_table, urban_green, store_tmp_files)
 
     logging.info('calculating node density')
     if verbose > 0:
         print('calculating node density\n')
-    node_density = util.calc_node_density(nodes, agg_table, store_tmp_files)
+    node_density = util.node_density(nodes, agg_table, store_tmp_files)
 
     logging.info('calculating shop density')
     if verbose > 0:
@@ -148,7 +161,7 @@ def calc_bikeability(id_column: str, agg_table: gpd.GeoDataFrame, download: bool
         shop_density = agg_table[['xid']]
         shop_density['shop_density'] = 0
     else:
-        shop_density = util.calc_shop_density(shops, agg_table, store_tmp_files)
+        shop_density = util.shop_density(shops, agg_table, store_tmp_files)
 
 
     bikeability_gdf = green_share[["xid", "urban_green_share", "geometry"]].merge(

@@ -1,0 +1,11 @@
+pandas
+numpy
+geopandas
+shapely
+networkx
+osmnx
+requests
+scikit-learn
+scipy
+h3
+matplotlib
