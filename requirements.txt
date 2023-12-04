@@ -9,3 +9,4 @@ scikit-learn
 scipy
 h3
 matplotlib
+pyproj

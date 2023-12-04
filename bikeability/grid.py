@@ -4,12 +4,12 @@ import geopandas as gpd
 from shapely.geometry import Polygon
 import warnings
 with warnings.catch_warnings():
-    warnings.filterwarnings("ignore",category=DeprecationWarning)
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
+
 
 def create_h3_grid(gdf: geopandas.GeoDataFrame, res: int):
-    """"
+    """
     :param gdf: Geometries to use. Should be a GeoDataFrame with polygon geometries.
-    :type agg_table: geopandas.GeoDataFrame
     :param res: resolution of h3 grid (0-15. see https://h3geo.org/docs/core-library/restable)
     :type res: integer
     :returns: 3h grid for respective region in given resolution
@@ -20,7 +20,7 @@ def create_h3_grid(gdf: geopandas.GeoDataFrame, res: int):
         poly_list, res=res
     )
     geoms = []
-    for hex in hexes:
-        geoms.append(Polygon(h3.h3_to_geo_boundary(hex)))
+    for hexa in hexes:
+        geoms.append(Polygon(h3.h3_to_geo_boundary(hexa)))
     geodf_poly = gpd.GeoDataFrame(geometry=geoms, crs=4326)
     return geodf_poly
