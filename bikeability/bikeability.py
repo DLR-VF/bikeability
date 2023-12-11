@@ -271,7 +271,8 @@ def share_cycling_infrastructure(network: geopandas.GeoDataFrame,
         'sum').reset_index()
 
     if network_with_cycling_infrastructure.empty:
-        network_with_cycling_infrastructure_share = aggregation_units[["xid", "lid"]]
+        network_with_cycling_infrastructure_share = aggregation_units[["xid"]]
+        network_with_cycling_infrastructure_share['length_main_street'] = 0
         network_with_cycling_infrastructure_share["length_bike_infra"] = 0
         network_with_cycling_infrastructure_share["cycling_infra_share"] = 0
         network_with_cycling_infrastructure_share = aggregation_units.merge(

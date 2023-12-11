@@ -12,10 +12,12 @@ import matplotlib.pyplot as plt
 
 
 slice_from = 0
-slice_to = 42
+slice_to = 62
 project_path = os.path.abspath('../')
-boundaries = gpd.read_file(project_path + f"/data3/boundaries2.shp", crs=25832, rows=slice(slice_from, slice_to)).to_crs(
-            epsg='4326')
+boundaries = gpd.read_file(project_path + f"/data_iroutecargobike/boundaries3.shp",
+                           crs=25832,
+                           rows=slice(slice_from, slice_to)).to_crs(
+                           epsg='4326')
 
 #boundaries = gpd.read_file(project_path + f"/data3/boundaries2.shp").to_crs(
 #            epsg='4326')
@@ -25,7 +27,8 @@ shapes = [#['gps_tracks_metadata_anonym_export_filtallBuff20.shp', 'FID'],
           #['AltRouteGHtrack_all_allBuff20_new.shp', 'FID'],
           #['AltRouteORSspdata_allBuff20.shp', 'FID'],
           #['AltRouteORStrack_all_allBuff20.shp', 'FID'],
-          ['snapped_roads_format_together_sp_AllBuff20.shp', 'FID'],
+          #['snapped_roads_format_together_sp_AllBuff20.shp', 'FID'],
+          ['snapped_roads_format_together_track_filt_buffer.shp', 'FID']
           ]
 
 
@@ -40,7 +43,7 @@ for shape in shapes:
     for index, row in boundaries.iterrows():
         hi = row.to_frame().T
         boundary = gpd.GeoDataFrame(geometry=row.to_frame().T['geometry'], crs=4326)
-        aggregation_boundaries = gpd.read_file(project_path + f"/data3/{shape[0]}", mask=boundary).to_crs(4326)
+        aggregation_boundaries = gpd.read_file(project_path + f"/data_iroutecargobike/{shape[0]}", mask=boundary).to_crs(4326)
         if aggregation_boundaries.empty:
             continue
         aggregation_boundaries = aggregation_boundaries[[shape[1], 'geometry']]
@@ -67,4 +70,6 @@ for shape in shapes:
 
 
 
-    bikeability_gdf_all.to_file(project_path + f"\\result_new\\{shape[0].split('.')[0]}{slice_from}_{slice_to}rest_bikeability.gpkg", driver="GPKG")
+    bikeability_gdf_all.to_file(project_path + f"/data_iroutecargobike/"
+                                               f"{shape[0].split('.')[0]}{slice_from}_{slice_to}_bikeability.gpkg",
+                                driver="GPKG")

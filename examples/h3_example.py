@@ -10,7 +10,7 @@ id_column = 'h3_id'
 store_temp_files = False
 
 project_path = os.path.abspath('../')
-aggregation_boundaries = gpd.read_file(project_path+f"/data/sg_test.gpkg").to_crs(epsg='4326')
+aggregation_boundaries = gpd.read_file(project_path+f"/data/AWK_AH21_25833.shp").to_crs(epsg='4326')
 h3_test = grid.create_h3_grid(aggregation_boundaries, res=8)
 h3_test.plot()
 h3_test = h3_test.reset_index(names=id_column)
