@@ -3,6 +3,12 @@ sphinx-quickstart on Fri Jul  9 10:40:37 2021.
 You can adapt this file completely to your liking, but it should at least
 contain the root `toctree` directive. -->
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/DLR-VF/ULTImodel/blob/master/LICENSE)
+[![PyPI version](https://badge.fury.io/py/ultimodel.svg)](https://pypi.python.org/pypi/ultimodel)
+[![Documentation Status](https://readthedocs.org/projects/ultimodel/badge/?version=latest)](https://ultimodel.readthedocs.io/en/latest/?badge=latest)
+[![Cite-us](XXX)
+
+
 # Bikeability
 
 PtAC is a Python package to automatically compute walking
