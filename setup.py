@@ -12,34 +12,26 @@ import setuptools
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
-'''
-import required packages from requirements file
+
+#import required packages from requirements file
 with open("requirements.txt") as f:
-    INSTALL_REQUIRES = [line.strip() for line in f.readlines()]'''
+    INSTALL_REQUIRES = [line.strip() for line in f.readlines()]
 
 setuptools.setup(
     name='bikeability',
-    version='0.0.1',
+    version='0.0.2c',
     author='German Aerospace Center - DLR (Simon Nieland)',
     author_email='simon.nieland@dlr.de',
-    description='A Package to derive bike-friendliness of spatial areas',
+    description='A Package to derive bike-friendliness from OpenStreetMap Data ',
     long_description=long_description,
     long_description_content_type="text/markdown",
     url='https://github.com/DLR-VF/bikeability',
-    project_urls = {
+    project_urls={
         "Documentation": 'https://bikeability.readthedocs.io/',
         "Source": 'https://github.com/DLR-VF/bikeability',
         "Bug Tracker": "https://github.com/DLR-VF/bikeability/issues "
     },
-    license='MIT',
+    license='MIT License',
     packages=['bikeability'],
-    install_requires=['pandas==2.1',
-                      'numpy==1.26',
-                      'geopandas== 0.14',
-                      'shapely== 2.0',
-                      'osmnx== 1.8',
-                      'networkx== 3.2',
-                      'requests== 2.31',
-                      'scikit-learn== 1.3',
-                      'scipy== 1.11',
-                      'h3'])
+    python_requires='>=3.10',
+    install_requires=INSTALL_REQUIRES)

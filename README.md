@@ -5,33 +5,28 @@ contain the root `toctree` directive. -->
 
 # Bikeability
 
-PtAC is a Python package to automatically compute walking
-accessibilities from residential areas to public transport stops for the Sustainable Development Goal 11.2
-defined by the United Nations. The goal aims to measure and monitor the proportion
-of the population in a city that has convenient access to public transport
-(see https://sdgs.un.org/goals/goal11). With this library users can download and process [OpenStreetMap](https://www.openstreetmap.org) (OSM)
-street networks and population information worldwide. Based on this it is possible to calculate accessibilities
-from population points to public transit stops based on minimum street network distance.
+"Bikeability" is a Python package to automatically computes bike-friendliness of specific areas.
+With this library users can download [OpenStreetMap](https://www.openstreetmap.org) (OSM)
+ data and generate spatial indicators for bikeability (bike facilities on main streets, green share, share of secondary 
+and tertiary roads, node density and bike shopp density). Based on this it is possible to calculate a bikeability index 
+(Hardinghaus et al. 2021) using a weighting approach derived from an expert survey.
 
-In order to calculate SDG 11.2.1 indicator the necessary input sources are
-population information, public transit stops and city networks.
-Worldwide population information can be downloaded via WMS 
-from [World Settlement Footprint](https://www.nature.com/articles/s41597-020-00580-5)
-(WSF) and converted
-to points. Public transit stops can be obtained from
-[OpenStreetMap (OSM)](https://wiki.openstreetmap.org/wiki/Public_transport) or
-[General Transit Feed Specification (GTFS)](https://gtfs.org/) feeds (have a look at the examples if you want to know how this
-works exactly). The street network can be downloaded and prepared for routing automatically within the library.
+# Citation
+
+If you use bikeability in your work, please cite the journal article:
+
+Hardinghaus, Michael, et al. "More than bike lanes—a multifactorial index of urban bikeability." Sustainability 13.21 (2021): 11584.
+
 
 # Installation and Usage
 
-Please see the [user guide](https://github.com/DLR-VF/PtAC/blob/master/docs/source/index.rst) 
+Please see the [user guide](https://github.com/DLR-VF/bikeability/blob/master/docs/source/index.rst) 
 for information about installation and usage.
 
 # Examples
 
-To get started with PtAC, read the user reference and see sample code and input data in
-[examples repository](https://github.com/DLR-VF/PtAC-examples).
+To get started with bikeability, read the user reference and see sample code and input data in
+[examples repository](https://github.com/DLR-VF/bikeability-examples).
 
 # Features
 
@@ -59,8 +54,7 @@ Bikeability is built on top of osmnx, geopandas, networkx.
 
 # Support
 
-If you have a usage question, please contact us via email ([simon.nieland@dlr.de](mailto:simon.nieland@dlr.de),
-[serra.yosmaoglu@dlr.de](mailto:serra.yosmaoglu@dlr.de)).
+If you have a usage question, please contact us via email ([simon.nieland@dlr.de](mailto:simon.nieland@dlr.de)).
 
 # License Information  
 
