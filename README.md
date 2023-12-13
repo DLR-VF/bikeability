@@ -1,14 +1,15 @@
-<!-- PtAC documentation master file, created by
-sphinx-quickstart on Fri Jul  9 10:40:37 2021.
-You can adapt this file completely to your liking, but it should at least
-contain the root `toctree` directive. -->
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/DLR-VF/bikeability/blob/master/LICENSE.md)
+[![PyPI version](https://badge.fury.io/py/ultimodel.svg)](https://pypi.python.org/pypi/bikeability)
+[![Documentation Status](https://readthedocs.org/projects/ultimodel/badge/?version=latest)](https://bikeability.readthedocs.io/en/latest/?badge=latest)
+[![Cite-us](XXX)
+
 
 # Bikeability
 
 "Bikeability" is a Python package to automatically computes bike-friendliness of specific areas.
 With this library users can download [OpenStreetMap](https://www.openstreetmap.org) (OSM)
  data and generate spatial indicators for bikeability (bike facilities on main streets, green share, share of secondary 
-and tertiary roads, node density and bike shopp density). Based on this it is possible to calculate a bikeability index 
+and tertiary roads, node density and bike shop density). Based on this, it is possible to calculate a bikeability index 
 (Hardinghaus et al. 2021) using a weighting approach derived from an expert survey.
 
 # Citation
