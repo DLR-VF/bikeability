@@ -28,7 +28,7 @@ shapes = [#['gps_tracks_metadata_anonym_export_filtallBuff20.shp', 'FID'],
           #['AltRouteORSspdata_allBuff20.shp', 'FID'],
           #['AltRouteORStrack_all_allBuff20.shp', 'FID'],
           #['snapped_roads_format_together_sp_AllBuff20.shp', 'FID'],
-          ['snapped_roads_format_together_track_filt_buffer.shp', 'FID']
+          ['Directions_reproj_buffered.shp', 'FID']
           ]
 
 

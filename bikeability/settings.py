@@ -1,4 +1,4 @@
-
+import logging
 from pathlib import Path
 home_directory = Path.home()
 
@@ -26,7 +26,11 @@ colums_of_street_network = ["lid",
                             "geometry"]
 
 columns_of_green_spaces = ["landuse", "natural", "leisure", "geometry"]
-
 columns_of_shops = ["name", "geometry", "shop"]
-
 tmp_directory = f"{home_directory}/.bikeability"
+log_level = logging.INFO
+log_name = ("bikeability")
+log_filename = (f"{tmp_directory}/{log_name}")
+log_console = True
+log_file = False
+

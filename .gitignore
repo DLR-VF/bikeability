@@ -1,0 +1,17 @@
+*.ipynb_checkpoints
+*.idea
+*nb.html
+
+*.cpg
+*.dbf
+*.prj
+*.shp
+*.shx
+*.qpj
+
+*cache*
+*/cache/*
+
+venv
+dist
+bikeability.egg-info

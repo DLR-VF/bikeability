@@ -6,7 +6,7 @@
 
 # Bikeability
 
-"Bikeability" is a Python package to automatically computes bike-friendliness of specific areas.
+"Bikeability" is a Python package to automatically compute bike-friendliness of specific areas.
 With this library users can download [OpenStreetMap](https://www.openstreetmap.org) (OSM)
  data and generate spatial indicators for bikeability (bike facilities on main streets, green share, share of secondary 
 and tertiary roads, node density and bike shop density). Based on this, it is possible to calculate a bikeability index 
