@@ -1,7 +1,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/DLR-VF/bikeability/blob/master/LICENSE.md)
 [![PyPI version](https://badge.fury.io/py/ultimodel.svg)](https://pypi.python.org/pypi/bikeability)
-[![Documentation Status](https://readthedocs.org/projects/ultimodel/badge/?version=latest)](https://bikeability.readthedocs.io/en/latest/?badge=latest)
-[![Cite-us](XXX)
+[![Documentation Status](https://readthedocs.org/projects/bikeability/badge/?version=latest)](https://bikeability.readthedocs.io/en/latest/?badge=latest)
+[![Cite-us](DOI)
 
 
 # Bikeability
