@@ -21,7 +21,7 @@ Hardinghaus, Michael, et al. "More than bike lanes—a multifactorial index of u
 
 # Installation and Usage
 
-Please see the [user guide](https://github.com/DLR-VF/bikeability/blob/master/docs/source/index.rst) 
+Please see the [user guide](https://github.com/DLR-VF/bikeability/blob/master/docs/index.rst) 
 for information about installation and usage.
 
 # Examples
@@ -59,7 +59,7 @@ If you have a usage question, please contact us via email ([simon.nieland@dlr.de
 
 # License Information  
 
-Bikeability is licensed under the MIT License . See the [LICENSE.md](https://github.com/DLR-VF/bikeability/blob/master/LICENSE.md) file for more information.
+Bikeability is licensed under the MIT License . See the [LICENSE](https://github.com/DLR-VF/bikeability/blob/master/LICENSE) file for more information.
 
 # Disclaimer
 
