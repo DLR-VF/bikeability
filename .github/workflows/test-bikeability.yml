@@ -3,9 +3,9 @@ name: Test Bikeability on different OS
 
 on:
   push:
-    branches: [ main ]
+    branches: [ mariald-workflow ]
   pull_request:
-    branches: [ main ]
+    branches: [ mariald-workflow ]
 
 
 jobs:
