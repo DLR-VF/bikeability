@@ -358,9 +358,11 @@ def calc_bikeability(id_column: str,
     :param verbose: verbose
     :type verbose: integer
     :param network_gdf: use given network for calculation
-    :type network_gdf: geopandas.GeoDataFrame
+    :type network_gdf: geopandas.GeoDataFrame, optional
     :param store_tmp_files: store pre- products for debugging. data sets will be written in settings.temp_folder
     :type store_tmp_files: bool
+    :param date: date for which the bikeability index should be calculated
+    :type date: str, optional
     :return: calculated bikeability values for the given aggregation units
 
     """
