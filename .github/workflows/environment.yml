@@ -1,0 +1,12 @@
+name: bikeability-environment
+channels:
+  - defaults
+dependencies:
+  - pandas
+  - numpy
+  - geopandas
+  - osmnx
+  - requests
+  - scikit-learn
+  - h3
+  - pytest
