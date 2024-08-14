@@ -18,7 +18,7 @@ Citation
 
 If you use bikeability in your work, please cite the journal article:
 
-Hardinghaus, Michael, et al. "[More than bike lanes—a multifactorial index of urban bikeability.]((https://elib.dlr.de/144713/))" Sustainability 13.21 (2021): 11584.
+Hardinghaus, Michael, et al. "`More than bike lanes—a multifactorial index of urban bikeability. <https://elib.dlr.de/144713/>`_" Sustainability 13.21 (2021): 11584.
 
 
 Getting Started
