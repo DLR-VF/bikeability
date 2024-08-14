@@ -11,7 +11,7 @@
 With this library, users can download [OpenStreetMap](https://www.openstreetmap.org) (OSM)
  data and generate spatial indicators for bikeability (bike facilities on main streets, green share, share of secondary 
 and tertiary roads, node density and bike shop density). Based on these indicators, it is possible to calculate a bikeability index 
-(Hardinghaus et al. 2021) using a weighting approach derived from an expert survey.
+([Hardinghaus et al. 2021](https://elib.dlr.de/144713/)) using a weighting approach derived from an expert survey.
 
 
 # Installation and Usage
