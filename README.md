@@ -1,5 +1,5 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/DLR-VF/bikeability/blob/master/LICENSE.md)
-[![PyPI version](https://badge.fury.io/py/ultimodel.svg)](https://pypi.python.org/pypi/bikeability)
+[![PyPI version](https://badge.fury.io/py/bikeability.svg)](https://pypi.python.org/pypi/bikeability)
 [![Documentation Status](https://readthedocs.org/projects/bikeability/badge/?version=latest)](https://bikeability.readthedocs.io/en/latest/?badge=latest)
 [![DOI](https://img.shields.io/badge/doi-10.5281%2Fzenodo.13318512-blue)](https://doi.org/10.5281/zenodo.13318512)
 
