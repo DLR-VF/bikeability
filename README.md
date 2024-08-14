@@ -45,6 +45,7 @@ Bikeability is built on top of osmnx, geopandas, networkx.
 
 * Michael Hardinghaus
 * Marius Lehne
+* María López Díaz
 
 # Citation
 
