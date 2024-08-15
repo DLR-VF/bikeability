@@ -45,6 +45,7 @@ jobs:
             source bikeability/bin/activate
           fi
           pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple bikeability
+        shell: bash
 
       - name: Run tests
         run: |
@@ -54,3 +55,4 @@ jobs:
             source bikeability/bin/activate
           fi
           pytest tests/
+        shell: bash
