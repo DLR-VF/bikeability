@@ -24,15 +24,33 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install dependencies
-        run: |
+      - name: Create and update virtual environment
+        run: | 
+          python -m venv bikeability
+          if [[ "$OSTYPE" == "msys" ]]; then
+            source bikeability/Scripts/activate
+          else
+            source bikeability/bin/activate
+          fi
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-
-      - name: Install pytest
-        run: |
           python -m pip install pytest
+        shell: bash
+
+      - name: Install bikeability
+        run: |
+          if [[ "$OSTYPE" == "msys" ]]; then
+            source bikeability/Scripts/activate
+          else
+            source bikeability/bin/activate
+          fi
+          pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple bikeability
 
       - name: Run tests
         run: |
+          if [[ "$OSTYPE" == "msys" ]]; then
+            source bikeability/Scripts/activate
+          else
+            source bikeability/bin/activate
+          fi
           pytest tests/
