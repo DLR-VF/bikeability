@@ -401,7 +401,7 @@ def calc_bikeability(id_column: str,
     boundary_gdf = geopandas.GeoDataFrame(index=[0], crs='epsg:4326', geometry=[agg_table.unary_union])
     boundary = boundary_gdf.loc[0, 'geometry']
 
-    print(f'Generating bikeability indicator\n')
+    print('Generating bikeability indicator\n')
     logging.info('generating bikeability indicator based on aggregation units...')
 
     if download:
