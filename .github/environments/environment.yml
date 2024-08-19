@@ -14,7 +14,5 @@ dependencies:
   - scikit-learn
   - h3
 
-  # testing and linting
+  # testing
   - pytest
-  - flake8
-  - black
