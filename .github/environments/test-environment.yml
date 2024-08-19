@@ -13,6 +13,4 @@ dependencies:
   - requests
   - scikit-learn
   - h3
-
-  # testing
   - pytest
