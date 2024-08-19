@@ -28,5 +28,5 @@ jobs:
 
       - name: Run linters
         run: |
-          black: true
-          flake8: true
+          black .
+          flake8 .
