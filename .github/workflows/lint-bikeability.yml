@@ -7,7 +7,13 @@ on:
 jobs:
   run-linters:
     name: Run linters
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        python-version: ['3.10']
+        include:
+          - environment-file: .github/environments/environment.yml
 
     steps:
       - name: Check out Git repository
@@ -16,10 +22,14 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v1
         with:
-          python-version: '3.10'
+          python-version: ${{ matrix.python-version }}
 
-      - name: Install Python dependencies
-        run: pip install black flake8
+      - name: Install dependencies from environment file
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip
+          pip install -r ${{ matrix.environment-file }}
 
       - name: Run linters
         uses: wearerequired/lint-action@v2
