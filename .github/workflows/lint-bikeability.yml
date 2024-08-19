@@ -27,7 +27,6 @@ jobs:
           activate-environment: lint-env
 
       - name: Run linters
-        uses: wearerequired/lint-action@v2
-        with:
+        run: |
           black: true
           flake8: true
