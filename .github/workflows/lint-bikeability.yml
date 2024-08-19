@@ -26,10 +26,8 @@ jobs:
 
       - name: Install dependencies from environment file
         run: |
-          python -m venv venv
-          source venv/bin/activate
-          pip install --upgrade pip
-          pip install -r ${{ matrix.environment-file }}
+          conda env create -f ${{ matrix.environment-file }} --name lint-env
+          conda activate lint-env
 
       - name: Run linters
         uses: wearerequired/lint-action@v2
