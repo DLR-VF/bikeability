@@ -19,15 +19,12 @@ jobs:
       - name: Check out Git repository
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v1
+      - name: Set up Conda
+        uses: conda-incubator/setup-miniconda@v2
         with:
           python-version: ${{ matrix.python-version }}
-
-      - name: Install dependencies from environment file
-        run: |
-          conda env create -f ${{ matrix.environment-file }} --name lint-env
-          conda activate lint-env
+          environment-file: ${{ matrix.environment-file }}
+          activate-environment: lint-env
 
       - name: Run linters
         uses: wearerequired/lint-action@v2
