@@ -24,6 +24,7 @@ jobs:
       - name: Set up Conda
         uses: conda-incubator/setup-miniconda@v2
         with:
+          miniconda-version: "latest"
           python-version: ${{ matrix.python-version }}
           environment-file: .github/environments/test-environment.yml
           activate-environment: bikeability-env
