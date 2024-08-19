@@ -1,1 +1,20 @@
+name: bikeability-env
 
+channels:
+  - conda-forge
+  - defaults
+
+dependencies:
+  # required
+  - pandas
+  - numpy
+  - geopandas
+  - osmnx
+  - requests
+  - scikit-learn
+  - h3
+
+  # testing and linting
+  - pytest
+  - flake8
+  - black
