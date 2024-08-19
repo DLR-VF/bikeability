@@ -13,7 +13,7 @@ jobs:
         os: [ubuntu-latest]
         python-version: ['3.10']
         include:
-          - environment-file: .github/environments/environment.yml
+          - environment-file: .github/environments/lint-environment.yml
 
     steps:
       - name: Check out Git repository
