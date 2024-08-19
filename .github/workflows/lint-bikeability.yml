@@ -27,6 +27,7 @@ jobs:
           activate-environment: lint-env
 
       - name: Run linters
+        shell: bash -l {0}
         run: |
           black .
           flake8 .
