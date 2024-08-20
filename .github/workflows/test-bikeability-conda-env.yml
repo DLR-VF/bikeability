@@ -14,7 +14,6 @@ jobs:
         include:
           - environment-file: .github/environments/test-environment.yml
 
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -26,20 +25,17 @@ jobs:
           environment-file: ${{ matrix.environment-file }}
           activate-environment: bikeability-env
           auto-update-conda: true
-        
-      - name: Initialize Conda
-        run: |
-          conda init bash
-        shell: bash
 
       - name: Install bikeability
         run: |
+          eval "$(conda shell.bash hook)"
           conda activate bikeability-env
           pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple bikeability
         shell: bash
 
       - name: Run tests
         run: | 
+          eval "$(conda shell.bash hook)"
           conda activate bikeability-env
           pytest tests/
         shell: bash
