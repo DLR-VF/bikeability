@@ -12,5 +12,5 @@ dependencies:
   - osmnx
   - requests
   - scikit-learn
-  - h3
   - pytest
+  - h3
