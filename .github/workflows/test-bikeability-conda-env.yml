@@ -26,6 +26,11 @@ jobs:
           environment-file: ${{ matrix.environment-file }}
           activate-environment: bikeability-env
           auto-update-conda: true
+        
+      - name: Initialize Conda
+        run: |
+          conda init bash
+        shell: bash
 
       - name: Install bikeability
         run: |
