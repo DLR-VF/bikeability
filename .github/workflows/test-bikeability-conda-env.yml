@@ -29,6 +29,14 @@ jobs:
           environment-file: .github/environments/test-environment.yml
           activate-environment: bikeability-env
 
+      - name: Verify Conda environment
+        run: |
+          conda info --envs
+          conda list
+          which python
+          python -m pytest --version
+        shell: bash
+
       - name: Install bikeability
         run: pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple bikeability
         shell: bash
