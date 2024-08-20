@@ -28,7 +28,9 @@ jobs:
           auto-update-conda: true
 
       - name: Install bikeability
-        run: pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple bikeability
+        run: |
+          conda activate bikeability-env
+          pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple bikeability
         shell: bash
 
       - name: Run tests
