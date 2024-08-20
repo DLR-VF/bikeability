@@ -11,6 +11,9 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         python-version: ['3.10']
+        include:
+          - environment-file: .github/environments/test-environment.yml
+
 
     steps:
       - name: Checkout repository
@@ -24,9 +27,8 @@ jobs:
       - name: Set up Conda
         uses: conda-incubator/setup-miniconda@v2
         with:
-          miniconda-version: "latest"
           python-version: ${{ matrix.python-version }}
-          environment-file: .github/environments/test-environment.yml
+          environment-file: ${{ matrix.environment-file }}
           activate-environment: bikeability-env
 
       - name: Verify Conda environment
@@ -42,5 +44,6 @@ jobs:
         shell: bash
 
       - name: Run tests
-        run: pytest tests/
+        run: | 
+          pytest tests/
         shell: bash
