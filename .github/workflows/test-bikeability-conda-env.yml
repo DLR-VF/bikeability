@@ -25,14 +25,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           environment-file: ${{ matrix.environment-file }}
           activate-environment: bikeability-env
-
-      - name: Verify Conda environment
-        run: |
-          conda info --envs
-          conda list
-          which python
-          python -m pandas --version
-        shell: bash
+          auto-update-conda: true
 
       - name: Install bikeability
         run: pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple bikeability
@@ -40,5 +33,6 @@ jobs:
 
       - name: Run tests
         run: | 
+          conda activate bikeability-env
           pytest tests/
         shell: bash
