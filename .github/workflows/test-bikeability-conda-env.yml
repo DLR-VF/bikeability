@@ -36,7 +36,7 @@ jobs:
           conda info --envs
           conda list
           which python
-          python -m pytest --version
+          python -m pandas --version
         shell: bash
 
       - name: Install bikeability
