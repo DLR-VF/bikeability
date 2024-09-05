@@ -50,8 +50,6 @@ All of this functionality is demonstrated step-by-step in the `bikeability Examp
 Frequently Asked Questions
 --------------------------
 
-hi.
-
 *Are there any usage limitations?* Yes. Refer to the `Nominatim Usage Policy`_ and `Overpass Commons`_ documentation for usage limitations and restrictions that you must adhere to at all times. If you use an alternative Nominatim/Overpass instance, ensure you understand and obey their usage policies. If you need to exceed these limitations, consider installing your own hosted instance and setting bikebilityto use it.
 
 .. _bikeability Examples: https://github.com/DLR-VF/bikeability-examples
