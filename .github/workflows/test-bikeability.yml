@@ -11,7 +11,7 @@ jobs:
       matrix:
         python-version: ['3.10']
         include:
-          - environment-file: .github/environments/requirements-bikeablity.txt
+          - environment-file: .github/environments/requirements-bikeability.txt
 
     steps:
       - name: Checkout repository
