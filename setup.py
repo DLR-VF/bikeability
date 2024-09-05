@@ -26,7 +26,7 @@ INSTALL_REQUIRES = ['pandas>=2.1.4',
 
 setuptools.setup(
     name='bikeability',
-    version='0.0.1c',
+    version='1.0.0',
     author='German Aerospace Center - DLR (Simon Nieland)',
     author_email='simon.nieland@dlr.de',
     description='A Package to derive bike-friendliness from OpenStreetMap data ',
