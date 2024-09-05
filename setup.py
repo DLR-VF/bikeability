@@ -12,10 +12,6 @@ import setuptools
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
-
-#import required packages from requirements file
-#with open("requirements.txt") as f:
-#    INSTALL_REQUIRES = [line.strip() for line in f.readlines()]
 INSTALL_REQUIRES = ['pandas>=2.1.4',
                     'numpy>=1.26.2',
                     'geopandas>= 0.14.1',
