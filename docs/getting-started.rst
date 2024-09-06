@@ -28,7 +28,7 @@ You can configure bikebility using the :code:`settings` module. Here, you are ab
 Downloading OpenStreetMap Data
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-bikebility uses `osmnx`_ to download street networks, green spaces and bike shops from OpenStreetMap. `osmnx`_ geocodes place names and addresses with the OpenStreetMap `Nominatim`_ API and enables the download of specific OSM data via Overpass API.
+Bikeability uses `osmnx`_ to download street networks, green spaces and bike shops from OpenStreetMap. `osmnx`_ geocodes place names and addresses with the OpenStreetMap `Nominatim`_ API and enables the download of specific OSM data via Overpass API.
 
 
 Amenities of bikeability
