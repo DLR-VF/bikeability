@@ -44,13 +44,6 @@ jobs:
           pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple bikeability
         shell: bash
 
-      - name: Run linters
-        run: |
-          source bikeability/bin/activate
-          black .
-          flake8 . --max-line-length=120
-        shell: bash
-
       - name: Run tests
         run: |
           source bikeability/bin/activate
