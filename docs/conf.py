@@ -39,7 +39,7 @@ autodoc_mock_imports = [
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
-extensions = ["sphinx.ext.autodoc", "sphinx.ext.napoleon"]
+extensions = ["sphinx.ext.autodoc", "sphinx.ext.napoleon", "sphinx.ext.viewcode"]
 language = "en"
 needs_sphinx = "7"  # same value as pinned in /docs/requirements.txt
 root_doc = "index"
