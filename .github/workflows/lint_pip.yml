@@ -1,0 +1,40 @@
+name: Lint with pip
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  run-linters:
+    name: Run linters
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        python-version: ['3.10']
+        include:
+          - environment-file: .github/environments/requirements_lint.txt
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Set up environment
+        run: |
+          python -m venv lint-env
+          source lint-env/bin/activate
+          python -m pip install --upgrade pip
+          pip install -r ${{ matrix.environment-file }}
+        shell: bash
+
+      - name: Run linters
+        shell: bash -l {0}
+        run: |
+          source lint-env/bin/activate
+          black .
+          flake8 . --max-line-length=120
