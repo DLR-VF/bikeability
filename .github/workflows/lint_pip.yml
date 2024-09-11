@@ -37,4 +37,4 @@ jobs:
         run: |
           source lint-env/bin/activate
           black .
-          flake8 . --max-line-length=160
+          flake8 . --max-line-length=160 --ignore=E203,F811
