@@ -35,7 +35,7 @@ jobs:
           python -m venv lint-env
           source lint-env/bin/activate
           python -m pip install --upgrade pip
-          pip install -r .github/environments/requirements-lint.txt
+          pip install -r .github/environments/requirements_lint.txt
         shell: bash
 
       - name: Run linters
