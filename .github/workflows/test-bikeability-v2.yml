@@ -12,8 +12,6 @@ jobs:
       matrix:
         os: [ ubuntu-latest ]
         python-version: [ '3.10' ]
-        include:
-          - environment-file: .github/environments/requirements-bikeability.txt
 
     steps:
       - name: Check out repository
@@ -24,28 +22,28 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Cache pip dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('requirements-bikeability.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-${{ matrix.python-version }}
-
-      - name: Install dependencies
+      - name: Set up environment bikeability
         run: |
           python -m venv bikeability
           source bikeability/bin/activate
           python -m pip install --upgrade pip
-          pip install -r ${{ matrix.environment-file }}
+          pip install -r .github/environments/requirements-bikeability.txt
+        shell: bash
+        
+      - name: Set up environment lint
+        run: |
+          python -m venv lint-env
+          source lint-env/bin/activate
+          python -m pip install --upgrade pip
+          pip install -r .github/environments/requirements-lint.txt
         shell: bash
 
       - name: Run linters
+        shell: bash -l {0}
         run: |
-          source bikeability/bin/activate
+          source lint-env/bin/activate
           black .
-          flake8 . --max-line-length=305
-        shell: bash
+          flake8 . --max-line-length=160 --exclude=lint-env/lib/python3.10/site-packages
 
       - name: Install bikeability from TestPyPI
         run: |
