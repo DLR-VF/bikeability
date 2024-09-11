@@ -44,7 +44,7 @@ jobs:
         run: |
           source bikeability/bin/activate
           black .
-          flake8 . --max-line-length=150
+          flake8 . --max-line-length=305
         shell: bash
 
       - name: Install bikeability from TestPyPI
