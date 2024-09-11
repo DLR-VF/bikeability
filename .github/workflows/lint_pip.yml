@@ -37,4 +37,4 @@ jobs:
         run: |
           source lint-env/bin/activate
           black .
-          flake8 . --max-line-length=160 --ignore=E203,F811,W503
+          flake8 . --max-line-length=160 --ignore=E203,F811,W503 --exclude=lint-env/lib/python3.10/site-packages
