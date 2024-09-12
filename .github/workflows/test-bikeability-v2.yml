@@ -43,7 +43,7 @@ jobs:
         run: |
           source lint-env/bin/activate
           black .
-          flake8 . --ignore=E203,F811,W503,E501 --exclude=lint-env,bikeability/lib
+          flake8 . --ignore=E203,F811,W503,E501 --exclude=lint-env/lib/python3.10/site-packages, bikeability/lib/python3.10/site-packages
 
       - name: Install bikeability from TestPyPI
         run: |
