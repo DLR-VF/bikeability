@@ -16,7 +16,7 @@ and tertiary roads, node density and bike shop density). Based on these indicato
 
 # Installation and Usage
 
-Please see the [user guide](https://github.com/DLR-VF/bikeability/blob/master/docs/index.rst) 
+Please see the [user guide](https://bikeability.readthedocs.io/en/latest/) 
 for information about installation and usage.
 
 # Examples
