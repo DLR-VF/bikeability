@@ -8,11 +8,11 @@ sys.setrecursionlimit(1500)
 # -- Project information -----------------------------------------------------
 
 project = "bikeability"
-copyright = "2023 German Aerospace Center (DLR)"
+copyright = "2024 German Aerospace Center (DLR)"
 author = "Simon Nieland, Michael Hardinghaus"
 
 # The full version, including alpha/beta/rc tags
-release = "0.0.1"
+release = "1.0.0"
 
 
 # -- General configuration ---------------------------------------------------
