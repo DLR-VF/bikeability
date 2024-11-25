@@ -62,4 +62,4 @@ Bikeability is licensed under the [MIT License](https://github.com/DLR-VF/bikeab
 
 * The software is provided "AS IS".
 
-* We tested the software, and it worked as expected. Nonetheless, we cannot guarantee it will work as you expect
+* We tested the software, and it worked as expected. Nonetheless, we cannot guarantee it will work as you expect.
