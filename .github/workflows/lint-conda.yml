@@ -2,7 +2,7 @@ name: Lint
 
 on:
   push:
-    branches: [ main ]
+    branches: [ 'release_conda' ]
 
 jobs:
   run-linters:
