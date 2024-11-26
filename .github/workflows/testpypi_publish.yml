@@ -2,7 +2,7 @@ name: Publish Python 🐍 distributions 📦 to testPyPI
 
 on:
   push:
-    branches: ['release']
+    branches: []#'release'
     # release:
     # types: [published]
 
@@ -25,4 +25,4 @@ jobs:
         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
       run: |
         python setup.py sdist bdist_wheel
-        twine upload dist/
+        twine upload dist/*

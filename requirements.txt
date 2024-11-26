@@ -1,6 +1,6 @@
 pandas==2.1.4
 numpy==1.26.2
-geopandas== 0.14.1
+geopandas== 0.14.4
 fiona==1.9.6
 osmnx== 1.8.0
 requests== 2.31.0
