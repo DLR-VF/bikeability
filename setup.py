@@ -12,13 +12,13 @@ import setuptools
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
-INSTALL_REQUIRES = ['pandas>=2.1.4',
-                    'numpy>=1.26.2',
-                    'geopandas>= 0.14.1',
-                    'osmnx>= 1.8.0',
-                    'requests>= 2.31.0',
-                    'scikit-learn>= 1.3.2',
-                    'h3>=3.7.6']
+INSTALL_REQUIRES = ['pandas==2.1.4',
+                    'numpy==1.26.2',
+                    'geopandas== 0.14.1',
+                    'osmnx== 1.8.0',
+                    'requests== 2.31.0',
+                    'scikit-learn== 1.3.2',
+                    'h3==3.7.6']
 
 setuptools.setup(
     name='bikeability',
