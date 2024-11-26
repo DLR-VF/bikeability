@@ -22,7 +22,7 @@ The official supported way to install bikeability is using pip:
 
 .. code-block:: shell
 
-    pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple bikeability
+    pip install bikeability
 
 
 
