@@ -1,14 +1,21 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # =============================================================================
-__author__     = "Simon Nieland, Michael Hardinghaus, María López Díaz"
-__copyright__  = "Copyright (c) 2024 Institute of Transport Research, German Aerospace Center"
-__credits__    = [ "Simon Nieland", "Michael Hardinghaus", "Marius Lehne", "María López Díaz" ]
-__license__    = "MIT"
-__version__    = "0.0.2"
+__author__ = "Simon Nieland, Michael Hardinghaus, María López Díaz"
+__copyright__ = (
+    "Copyright (c) 2024 Institute of Transport Research, German Aerospace Center"
+)
+__credits__ = [
+    "Simon Nieland",
+    "Michael Hardinghaus",
+    "Marius Lehne",
+    "María López Díaz",
+]
+__license__ = "MIT"
+__version__ = "0.0.2"
 __maintainer__ = "Simon Nieland"
-__email__      = "Simon.Nieland@dlr.de"
-__status__     = "Development"
+__email__ = "Simon.Nieland@dlr.de"
+__status__ = "Development"
 # =============================================================================
 """ Bikeability computes bike-friendliness of specific areas."""
 # =============================================================================
@@ -32,17 +39,21 @@ with warnings.catch_warnings():
 @copyright : Institut fuer Verkehrsforschung, Deutsches Zentrum fuer Luft- und Raumfahrt
 """
 
-project_path = os.path.abspath('../')
+project_path = os.path.abspath("../")
 sys.path.append(project_path)
-ox.settings.useful_tags_way = ox.settings.useful_tags_way + settings.additional_useful_tags_way
+ox.settings.useful_tags_way = (
+    ox.settings.useful_tags_way + settings.additional_useful_tags_way
+)
 
 
-def get_network(polygon: geopandas.GeoDataFrame,
-                network_type: str = "walk",
-                custom_filter: str = None,
-                simplify: bool = True,
-                verbose: int = 0,
-                date: str = None) -> geopandas.GeoDataFrame:
+def get_network(
+    polygon: geopandas.GeoDataFrame,
+    network_type: str = "walk",
+    custom_filter: str = None,
+    simplify: bool = True,
+    verbose: int = 0,
+    date: str = None,
+) -> geopandas.GeoDataFrame:
     """
     Download street network from osm via osmnx.
 
@@ -63,21 +74,20 @@ def get_network(polygon: geopandas.GeoDataFrame,
     """
 
     if date is not None:
-        ox.settings.overpass_settings = f"[out:json][timeout:200][date:'{date}T00:00:00Z']"
+        ox.settings.overpass_settings = (
+            f"[out:json][timeout:200][date:'{date}T00:00:00Z']"
+        )
         if verbose > 0:
             print(f"date: {date}")
             print(f"overpass request setting: {ox.settings.overpass_settings}\n")
-    bounds = polygon.unary_union.bounds
+    bounds = polygon.union_all().bounds
     network_gdfs = ox.graph_to_gdfs(
         ox.graph_from_bbox(
-            north=bounds[3],
-            south=bounds[1],
-            east=bounds[2],
-            west=bounds[0],
+            bbox=bounds,
             custom_filter=custom_filter,
             network_type=network_type,
             simplify=simplify,
-            retain_all=True
+            retain_all=True,
         )
     )
     return network_gdfs
@@ -101,7 +111,9 @@ def get_geometries(polygon, tags, verbose=1, date=None):
 
     if date is not None:
 
-        ox.settings.overpass_settings = f"[out:json][timeout:200][date:'{date}T00:00:00Z']"
+        ox.settings.overpass_settings = (
+            f"[out:json][timeout:200][date:'{date}T00:00:00Z']"
+        )
         if verbose:
             print(f"date: {date}")
             print(f"overpass request setting: {ox.settings.overpass_settings}\n")

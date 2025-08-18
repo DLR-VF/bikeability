@@ -1,14 +1,21 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # =============================================================================
-__author__     = "Simon Nieland, Michael Hardinghaus, María López Díaz"
-__copyright__  = "Copyright (c) 2024 Institute of Transport Research, German Aerospace Center"
-__credits__    = [ "Simon Nieland", "Michael Hardinghaus", "Marius Lehne", "María López Díaz" ]
-__license__    = "MIT"
-__version__    = "0.0.2"
+__author__ = "Simon Nieland, Michael Hardinghaus, María López Díaz"
+__copyright__ = (
+    "Copyright (c) 2024 Institute of Transport Research, German Aerospace Center"
+)
+__credits__ = [
+    "Simon Nieland",
+    "Michael Hardinghaus",
+    "Marius Lehne",
+    "María López Díaz",
+]
+__license__ = "MIT"
+__version__ = "0.0.2"
 __maintainer__ = "Simon Nieland"
-__email__      = "Simon.Nieland@dlr.de"
-__status__     = "Development"
+__email__ = "Simon.Nieland@dlr.de"
+__status__ = "Development"
 # =============================================================================
 """ Bikeability computes bike-friendliness of specific areas."""
 # =============================================================================
@@ -39,7 +46,7 @@ import warnings
 @copyright : Institut fuer Verkehrsforschung, Deutsches Zentrum fuer Luft- und Raumfahrt
 """
 
-project_path = os.path.abspath('../')
+project_path = os.path.abspath("../")
 sys.path.append(project_path)
 
 with warnings.catch_warnings():
@@ -48,10 +55,13 @@ with warnings.catch_warnings():
 
 # from geoalchemy2 import Geometry, WKTElement
 
-def project_gdf(gdf: geopandas.GeoDataFrame,
-                geom_col: str = "geometry",
-                to_crs: str = None,
-                to_latlong: bool = False) -> geopandas.GeoDataFrame:
+
+def project_gdf(
+    gdf: geopandas.GeoDataFrame,
+    geom_col: str = "geometry",
+    to_crs: str = None,
+    to_latlong: bool = False,
+) -> geopandas.GeoDataFrame:
     """
     Project a GeoDataFrame to the UTM zone appropriate for its geometries' centroid.
 
@@ -95,7 +105,7 @@ def project_gdf(gdf: geopandas.GeoDataFrame,
 
             # calculate the centroid of the union of all the geometries in the
             # GeoDataFrame
-            avg_longitude = gdf[geom_col].unary_union.centroid.x
+            avg_longitude = gdf[geom_col].union_all().centroid.x
 
             # calculate the UTM zone from this avg longitude and define the UTM
             # CRS to project
@@ -118,8 +128,9 @@ def get_centroids(cluster: object) -> tuple:
     return tuple(centroid)
 
 
-def cluster_intersections_to_crossroad(nodes: geopandas.GeoDataFrame,
-                                       verbose: int = 0) -> geopandas.GeoDataFrame:
+def cluster_intersections_to_crossroad(
+    nodes: geopandas.GeoDataFrame, verbose: int = 0
+) -> geopandas.GeoDataFrame:
     """
     Clusters nodes of the street network into real crossroads
     :param nodes: nodes of the street network
@@ -128,28 +139,29 @@ def cluster_intersections_to_crossroad(nodes: geopandas.GeoDataFrame,
     """
     nodes["y"] = nodes["geometry"].y
     nodes["x"] = nodes["geometry"].x
-    coords = nodes[['y', 'x']].values
+    coords = nodes[["y", "x"]].values
 
     # clustering
     if verbose > 1:
-        print('    performing clustering of intersections..')
+        print("    performing clustering of intersections..")
     db = DBSCAN(eps=40, min_samples=1, n_jobs=-1).fit(coords)
     cluster_labels = db.labels_
     num_clusters = len(set(cluster_labels))
     if verbose > 1:
-        print('    Number of crossroads: {}\n'.format(num_clusters))
+        print("    Number of crossroads: {}\n".format(num_clusters))
     clusters = pd.Series([coords[cluster_labels == n] for n in range(num_clusters)])
 
     # get cluster centroids
     centermost_points = clusters.map(get_centroids)
     lats, lons = zip(*centermost_points)
-    rep_points = pd.DataFrame({'lon': lons, 'lat': lats})
+    rep_points = pd.DataFrame({"lon": lons, "lat": lats})
     rs = rep_points
     geometry = [Point(xy) for xy in zip(rs.lon, rs.lat)]
 
     geo_df = GeoDataFrame(rs, crs=nodes.crs, geometry=geometry)
 
     return geo_df
+
 
 def ts(style="datetime", template=None):
     """
@@ -229,7 +241,9 @@ def log(message, level=None, name=None, filename=None):
     if settings.log_console:
         # prepend timestamp then convert to ASCII for Windows command prompts
         message = f"{ts()} {message}"
-        message = ud.normalize("NFKD", message).encode("ascii", errors="replace").decode()
+        message = (
+            ud.normalize("NFKD", message).encode("ascii", errors="replace").decode()
+        )
 
         try:
             # print explicitly to terminal in case Jupyter has captured stdout

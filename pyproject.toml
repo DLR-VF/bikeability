@@ -1,0 +1,35 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "bikeability"
+version = "1.0.3"
+description = "A Package to derive bike-friendliness from OpenStreetMap data"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+
+
+
+authors = [
+  { name = "German Aerospace Center - DLR (Simon Nieland)", email = "simon.nieland@dlr.de" }
+]
+
+dependencies = [
+    "fiona>=1.10.1",
+    "geopandas>=1.1.1",
+    "h3>=4.3.1",
+    "osmnx>=2.0.6",
+    "requests>=2.32.4",
+    "scikit-learn>=1.7.1",
+]
+
+
+[project.urls]
+Documentation = "https://bikeability.readthedocs.io/"
+Source = "https://github.com/DLR-VF/bikeability"
+"Bug Tracker" = "https://github.com/DLR-VF/bikeability/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["bikeability"]
