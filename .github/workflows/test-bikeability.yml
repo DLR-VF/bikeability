@@ -50,6 +50,5 @@ jobs:
 #        shell: bash
 
       - name: Run tests
-        run: |
-          uv run pytest tests/
+        run: uv run pytest tests
         shell: bash
