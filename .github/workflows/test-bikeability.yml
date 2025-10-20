@@ -40,7 +40,7 @@ jobs:
 
       - name: Install bikeability from TestPyPI
         run: |
-          uv python install bikeability
+          uv pip install bikeability
         shell: bash
 
       - name: Run tests
