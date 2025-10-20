@@ -28,6 +28,9 @@ jobs:
       - name: Install the project
         run: uv sync --locked --all-extras --dev
 
+      - name: Install pytest
+        run: uv pip install pytest
+
 #      - name: Cache pip dependencies
 #        uses: actions/cache@v3
 #        with:
