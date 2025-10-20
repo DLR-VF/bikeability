@@ -40,12 +40,12 @@ jobs:
 
       - name: Install bikeability from TestPyPI
         run: |
-          source .venv/activate
+          source .venv/Scripts/activate
           pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple bikeability
         shell: bash
 
       - name: Run tests
         run: |
-          source bikeability/bin/activate
+          source .venv/Scripts/activate
           pytest tests/
         shell: bash
