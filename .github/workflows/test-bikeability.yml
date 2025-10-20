@@ -2,7 +2,7 @@ name: Test Bikeability on Ubuntu
 
 on:
   push:
-    branches: [ main, fork/johanngrobe/chore/dependencies-update ]
+    branches: [ main, dependencies-update ]
 
 jobs:
   test:
