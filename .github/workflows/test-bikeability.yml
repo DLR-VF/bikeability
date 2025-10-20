@@ -31,27 +31,6 @@ jobs:
       - name: Install pytest
         run: uv pip install pytest
 
-#      - name: Cache pip dependencies
-#        uses: actions/cache@v3
-#        with:
-#          path: ~/.cache/pip
-#          key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('requirements.txt') }}
-#          restore-keys: |
-#            ${{ runner.os }}-pip-${{ matrix.python-version }}
-
-#      - name: Install dependencies
-#        run: |
-#          python -m venv bikeability
-#          source bikeability/bin/activate
-#          python -m pip install --upgrade pip
-#          pip install -r ${{ matrix.environment-file }}
-#        shell: bash
-
-#      - name: Install bikeability from TestPyPI
-#        run: |
-#          uv pip install bikeability
-#        shell: bash
-
       - name: Run tests
         run: uv run pytest tests
         shell: bash
